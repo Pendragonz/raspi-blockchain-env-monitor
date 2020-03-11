@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_httpauth import HTTPBasicAuth
 from flask_restful import Api, Resource
-
+import os
 
 app = Flask(__name__)
 auth=HTTPBasicAuth()
@@ -53,8 +53,16 @@ def testnetService():
 	elif mainnetAppRunning==True:
 		return 'Mainnet App already running. Please terminate before retrying.'
 	else:
+		os.system('nohup python3 ./repTnTx.py &')
 		testnetAppRunning=True
 		return 'Ok Ill run that script in just a jiffy'
+
+@app.route('/get/pubkey')
+def getPubKey():
+	f = open("pubkey.txt", "r")
+	text = f.read()
+	f.close()
+	return text
 
 
 @app.route('/run/mainnet/<int:temp>/<int:humid>/<int:interval>')
@@ -77,6 +85,18 @@ def mainnetService(temp, humid, interval):
 
 		mainnetAppRunning=True
 		return 'running app on mainnet'
+
+@app.route('/reset')
+@auth.login_required()
+def reset():
+	os.system("rm nohup.txt")
+	os.system("rm pubkey.txt")
+	global users, mainnetRunning, testnetRunning, userRegistered
+	users = {}
+	mainnetRunning=False
+	testnetRunning=False
+	userRegistered=False
+
 
 
 if __name__ == '__main__':

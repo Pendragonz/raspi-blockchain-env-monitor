@@ -14,6 +14,10 @@ DHT_PIN=4
 #Generate a random XLM private + public key
 keypair = Keypair.random()
 print("pub: " + keypair.public_key + " priv: " + keypair.secret)
+f=open("pubkey.txt", "w")
+f.write(keypair.public_key)
+f.close()
+
 
 #Request testnet XLM to use on stellar
 url='https://friendbot.stellar.org'
