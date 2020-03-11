@@ -87,7 +87,7 @@ def mainnetService(temp, humid, interval):
 		return 'running app on mainnet'
 
 @app.route('/reset')
-@auth.login_required()
+@auth.login_required
 def reset():
 	os.system("rm nohup.txt")
 	os.system("rm pubkey.txt")
