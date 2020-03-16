@@ -3,6 +3,9 @@ from flask_httpauth import HTTPBasicAuth
 from flask_restful import Api, Resource
 import os
 
+from stellar_sdk import Server, Keypair, TransactionBuilder, Network, Account
+import requests
+
 app = Flask(__name__)
 auth=HTTPBasicAuth()
 api=Api(app, prefix="/api/")
@@ -17,8 +20,9 @@ users = {}
 @app.route('/home')
 @app.route('/index')
 def index():
-	return 'Hello World!'
+	return 'XLM Environment Monitor is running. View documentation here; '
 
+#Also needs work.
 @app.route('/register/<username>/<password>')
 def register(username, password):
 	global users, userRegistered
@@ -29,6 +33,7 @@ def register(username, password):
 		userRegistered=True
 		return 'user registered! welcome ' + username
 
+#Needs a LOT of work.
 @auth.verify_password
 def verify_password(username, password):
 	global users
@@ -36,12 +41,6 @@ def verify_password(username, password):
 		return True
 	else:
 		return False
-
-
-@app.route('/private')
-@auth.login_required
-def privvy():
-	return 'welcome admin'
 
 
 @app.route('/run/testnet')
@@ -53,16 +52,30 @@ def testnetService():
 	elif mainnetAppRunning==True:
 		return 'Mainnet App already running. Please terminate before retrying.'
 	else:
-		os.system('nohup python3 ./repTnTx.py &')
-		testnetAppRunning=True
-		return 'Ok Ill run that script in just a jiffy'
+		#request to set up the new address with free testnet XLM
+		keys=genKeypair(True)
+		testnetXlmUrl='https://friendbot.stellar.org'
+		response=requests.get(testnetXlmUrl, params={'addr':keys.public_key})
 
+		#os.system('nohup python3 ./repTnTx.py &')
+		os.system('nohup python3 ./run.py &')
+		testnetAppRunning=True
+		return 'App running on testnet on ' + keys.public_key
+
+#Returns the pubkey that the app is running on
 @app.route('/get/pubkey')
 def getPubKey():
-	f = open("pubkey.txt", "r")
-	text = f.read()
-	f.close()
-	return text
+	#f = open("pubkey.txt", "r")
+	#text = f.read()
+	#f.close()
+
+	keyFile=open("keys.txt", "r")
+	text = keyFile.read()
+	keyFile.close()
+
+	processedText=[x.strip() for x in text.split(',')]
+
+	return processedText[0] + ": " + processedText[1]
 
 
 @app.route('/run/mainnet/<int:temp>/<int:humid>/<int:interval>')
@@ -86,6 +99,7 @@ def mainnetService(temp, humid, interval):
 		mainnetAppRunning=True
 		return 'running app on mainnet'
 
+#delete all files and halt all processes (need to add halt process functionality.)
 @app.route('/reset')
 @auth.login_required
 def reset():
@@ -98,8 +112,39 @@ def reset():
 	userRegistered=False
 
 
+#Tests , delete soon.
+@app.route('/test/mainnet')
+def mainKeyTest():
+	return genKeypair(False)
+
+@app.route('/test/testnet')
+def testKeyTest():
+	return genKeypair(True)
+
+
+
+#testnet must be a boolean value. True for testnet, False for mainnet
+def genKeypair( testnet ):
+        keypair = Keypair.random()
+
+        if testnet is True:
+                str="TESTNET,"
+        else:
+                str="MAINNET,"
+
+        str+=keypair.public_key
+        str+=","
+        str+=keypair.secret
+
+        f=open("keys.txt", "w")
+        f.write(str)
+        f.close()
+
+        return keypair
+
+
+
 
 if __name__ == '__main__':
 	app.run(port=5000, host='0.0.0.0', debug=True)
-
 
