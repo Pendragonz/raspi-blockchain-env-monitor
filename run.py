@@ -43,18 +43,18 @@ keypair=Keypair.from_secret(listKeyData[2])
 #check if accound exists and balance is >= 1.5 or loop until it is.
 balance_valid=False
 while balance_valid is not True:
-	res=requests.get(apiAddr, params={'addr': keypair.public_key})
+	res=requests.get(apiAddr+"accounts/"+keypair.public_key)
 	if res.status_code == 200:
-		print("account valid")
+		print("address valid")
 		try:
 			res_as_json=json.loads(res.text)
 			bal=res_as_json["balances"][0]['balance']
 			print("balance: " + bal)
 		except:
-			print("error fetching balance")
+			print("error fetching balance. balance likely 0. please send at least 1.5XLM")
 			time.sleep(20)
 		else:
-			if bal >= 1.5:
+			if float(bal) >= 1.5:
 				#everything is perfect, break out of loop
 				balance_valid=True
 			else:
