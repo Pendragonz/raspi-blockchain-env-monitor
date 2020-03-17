@@ -6,6 +6,7 @@ import sys
 import getopt
 from decimal import Decimal
 
+import json
 import pickle
 
 #Define sensor type and GPIO pin
@@ -29,14 +30,39 @@ listKeyData=[x.strip() for x in keyData.split(',')]
 
 #CHANGE URL TO MAINNET URL!
 if listKeyData[0] == "MAINNET":
-	server=Server("https://horizon-testnet.stellar.org")
-	NET_PASS=Network.TESTNET_NETWORK_PASSPHRASE
+	apiAddr="https://horizon.stellar.org/"
+	server=Server(apiAddr)
+	NET_PASS=Network.PUBLIC_NETWORK_PASSPHRASE
 else:
-	server=Server("https://horizon-testnet.stellar.org")
+	apiAddr="https://horizon-testnet.stellar.org/"
+	server=Server(apiAddr)
 	NET_PASS=Network.TESTNET_NETWORK_PASSPHRASE
 
 keypair=Keypair.from_secret(listKeyData[2])
-account=server.load_account(keypair.public_key)
+
+#check if accound exists and balance is >= 1.5 or loop until it is.
+balance_valid=False
+while balance_valid is not True:
+	res=requests.get(apiAddr, params={'addr': keypair.public_key})
+	if res.status_code == 200:
+		print("account valid")
+		try:
+			res_as_json=json.loads(res.text)
+			bal=res_as_json["balances"][0]['balance']
+			print("balance: " + bal)
+		except:
+			print("error fetching balance")
+			time.sleep(20)
+		else:
+			if bal >= 1.5:
+				#everything is perfect, break out of loop
+				balance_valid=True
+			else:
+				print("balance not high enough")
+				time.sleep(20)
+	else:
+		print("err fetching account. stat code: " + res.status_code + " account possibly not created")
+		time.sleep(20)
 
 
 #Run everything!

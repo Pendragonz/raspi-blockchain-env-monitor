@@ -95,9 +95,11 @@ def mainnetService(temp, humid, interval):
 		if interval <= 1:
 			return 'interval can not be less than 2 seconds'
 
-
+		keys=genKeypair(False)
+		os.system('nohup python3 ./run.py &')
 		mainnetAppRunning=True
-		return 'running app on mainnet'
+
+		return 'running app on mainnet. Please send XLM to: ' + keys.public_key
 
 #delete all files and halt all processes (need to add halt process functionality.)
 @app.route('/reset')
