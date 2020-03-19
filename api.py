@@ -65,9 +65,6 @@ def testnetService():
 #Returns the pubkey that the app is running on
 @app.route('/get/pubkey')
 def getPubKey():
-	#f = open("pubkey.txt", "r")
-	#text = f.read()
-	#f.close()
 
 	keyFile=open("keys.txt", "r")
 	text = keyFile.read()
