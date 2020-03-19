@@ -99,7 +99,7 @@ while ON:
 		#memo_to_write+=":"+str(t_hms[2])
 		
 		memo_to_write=   str(t_[1])+"/"+str(t_[0])+";"+str(t_[2])
-		memo_to_write+= ";" + str(t_[3])
+		memo_to_write+= ";" + str(t_[3]) + ";" + str(t_[4])
 		
 
 		if TEMP_ON:
