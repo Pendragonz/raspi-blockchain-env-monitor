@@ -59,7 +59,7 @@ def testnetService():
 		#os.system('nohup python3 ./repTnTx.py &')
 		os.system('nohup python3 ./run.py &')
 		testnetAppRunning=True
-		return 'App running on testnet on ' + keys.public_key + "<p>"+getExplorerURL(True,keys.public_key)+"</p>"
+		return 'App running on testnet on ' + keys.public_key + "<p><a>"+getExplorerURL(True,keys.public_key)+"</a></p>"
 
 #Returns the pubkey that the app is running on
 @app.route('/get/pubkey')
