@@ -19,7 +19,7 @@ users = {}
 @app.route('/home')
 @app.route('/index')
 def index():
-	return 'XLM Environment Monitor is running. View documentation here; '
+	return 'XLM Environment Monitor api is running. View documentation here; '
 
 #Also needs work.
 @app.route('/register/<username>/<password>')
