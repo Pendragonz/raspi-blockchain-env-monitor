@@ -60,7 +60,7 @@ def testnetService():
 		#os.system('nohup python3 ./repTnTx.py &')
 		os.system('nohup python3 ./run.py &')
 		testnetAppRunning=True
-		return 'App running on testnet on ' + keys.public_key
+		return 'App running on testnet on ' + keys.public_key + "<p>"+getExplorerURL(True,keys.public_key)+"</p>"
 
 #Returns the pubkey that the app is running on
 @app.route('/get/pubkey')
@@ -129,6 +129,20 @@ def genKeypair( testnet ):
         f.close()
 
         return keypair
+
+#returns url to stellar expert explorer.
+def getExplorerURL( isTestnet, pubkey):
+
+	link="https://stellar.expert/explorer/"
+	if isTestnet is True:
+		link+="testnet/"
+	else:
+		link+="public/"
+
+	link+="account/" + pubkey
+
+
+	return link
 
 
 
