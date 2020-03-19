@@ -94,13 +94,18 @@ while ON:
 		avg_humid=round(avg_humid, 2)
 
 		#Construct TXN
-		t_hms=time.localtime()[3:6]
-		memo_to_write="ti"+str(t_hms[0])+":"+str(t_hms[1])
-		memo_to_write+=":"+str(t_hms[2])
+		t_=time.localtime()[1:6]
+		#memo_to_write="ti"+str(t_hms[0])+":"+str(t_hms[1])
+		#memo_to_write+=":"+str(t_hms[2])
+		
+		memo_to_write=   str(t_[1])+"/"+str(t_[0])+";"+str(t_[2])
+		memo_to_write+= ";" + str(t_[3])
+		
+
 		if TEMP_ON:
-			memo_to_write+="te:"+str(avg_temp)
+			memo_to_write+="t:"+str(avg_temp)
 		if HUMID_ON:
-			memo_to_write+="hu:"+str(avg_humid)
+			memo_to_write+="h:"+str(avg_humid)
 
 		account=server.load_account(keypair.public_key)
 
@@ -121,7 +126,7 @@ while ON:
 		
 		#sign and submit
 		txn.sign(keypair)
-		print("submitting tx " + TOTAL_TXNS_COMPLETED )
+		print("submitting tx " + str(TOTAL_TXNS_CREATED) )
 		response=server.submit_transaction(txn)
 
 		#Reset Loop Variables TODO turn this into a function.
