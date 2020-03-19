@@ -15,7 +15,6 @@ DHT_PIN=4
 
 #Set up run conditions based on parameters TODO
 INTERVAL=20
-ID_NO="01"
 TEMP_ON=True
 HUMID_ON=True
 
@@ -96,7 +95,7 @@ while ON:
 
 		#Construct TXN
 		t_hms=time.localtime()[3:6]
-		memo_to_write=str(ID_NO)+"ti"+str(t_hms[0])+":"+str(t_hms[1])
+		memo_to_write="ti"+str(t_hms[0])+":"+str(t_hms[1])
 		memo_to_write+=":"+str(t_hms[2])
 		if TEMP_ON:
 			memo_to_write+="te:"+str(avg_temp)
