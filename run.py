@@ -95,8 +95,6 @@ while ON:
 
 		#Construct TXN
 		t_=time.localtime()[1:6]
-		#memo_to_write="ti"+str(t_hms[0])+":"+str(t_hms[1])
-		#memo_to_write+=":"+str(t_hms[2])
 		
 		memo_to_write=   str(t_[1])+"/"+str(t_[0])+";"+str(t_[2])
 		memo_to_write+= ";" + str(t_[3]) + ";" + str(t_[4])
