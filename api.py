@@ -8,7 +8,6 @@ import requests
 
 app = Flask(__name__)
 auth=HTTPBasicAuth()
-api=Api(app, prefix="/api/")
 
 userRegistered=False
 testnetAppRunning=False
