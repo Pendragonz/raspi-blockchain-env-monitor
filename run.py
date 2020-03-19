@@ -121,6 +121,7 @@ while ON:
 		
 		#sign and submit
 		txn.sign(keypair)
+		print("submitting tx " + TOTAL_TXNS_COMPLETED )
 		response=server.submit_transaction(txn)
 
 		#Reset Loop Variables TODO turn this into a function.
