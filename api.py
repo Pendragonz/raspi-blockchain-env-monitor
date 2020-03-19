@@ -114,17 +114,6 @@ def reset():
 	userRegistered=False
 
 
-#Tests , delete soon.
-@app.route('/test/mainnet')
-def mainKeyTest():
-	return genKeypair(False)
-
-@app.route('/test/testnet')
-def testKeyTest():
-	return genKeypair(True)
-
-
-
 #testnet must be a boolean value. True for testnet, False for mainnet
 def genKeypair( testnet ):
         keypair = Keypair.random()
