@@ -2,6 +2,7 @@ from flask import Flask
 from flask_httpauth import HTTPBasicAuth
 from flask_restful import Api, Resource
 import os
+import os.path
 
 from stellar_sdk import Server, Keypair, TransactionBuilder, Network, Account
 import requests
@@ -127,7 +128,7 @@ def genKeypair( testnet ):
 
 	if KEY_GEN is not True:
 		keypair = Keypair.random()
-		
+
 		if testnet is True:
 			str="TESTNET,"
 		else:
@@ -164,8 +165,17 @@ def getExplorerURL( isTestnet, pubkey):
 
 
 #add in condition down here to check for existance of keys.txt
+if os.path.isfile('keys.txt') is True:
+	KEY_GEN=True
+else:
+	KEY_GEN=False
 
-KEY_GEN=True
+if os.path.isfile('mainrunning.txt') is True:
+	#read the file and send data to
+	mainnetService(1,1,3)
+elif os.path.isfile('testnetrunning.txt') is True:
+	testnetService()
+
 
 if __name__ == '__main__':
 	app.run(port=5000, host='0.0.0.0', debug=True)
