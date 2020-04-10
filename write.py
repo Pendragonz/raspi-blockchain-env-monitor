@@ -74,7 +74,7 @@ def getNextData():
 		try:
 			dbconn=sqlite3.connect("envdata.db")
 			c=dbconn.cursor()
-			c.execute('''SELECT min(id),temp,humid,datetime FROM envdata WHERE sent=FALSE''')
+			c.execute('''SELECT min(id),temp,humid,datetime FROM ENV WHERE sent=FALSE;''')
 			db_res=c.fetchall()
 			dbconn.close()
 
