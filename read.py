@@ -1,3 +1,4 @@
+
 import Adafruit_DHT
 import time
 from decimal import Decimal
@@ -17,9 +18,10 @@ path="envdata.db"
 if os.path.isfile(path) is not True:
 	dbconn=sqlite3.connect(path)
 	c = dbconn.cursor()
-	c.execute('''CREATE TABLE ENV (temp FLOAT, humid FLOAT, datetime TEXT, sent BOOL)''')
+	c.execute('''CREATE TABLE ENV (id INTEGER PRIMARY KEY, temp FLOAT, humid FLOAT, datetime TEXT, sent INTEGER)''')
 	dbconn.commit()
 	dbconn.close()
+	print("table created")
 
 def mainLoop():
 
@@ -50,8 +52,10 @@ def mainLoop():
 			dt=str(t_[1]) + "/"+ str(t_[0]) + ";" + str(t_[2])+":"+str(t_[3])+":"+str(t_[4])
 
 			#Keep trying to add it to the db
-			while writeToDB(avg_temp, avg_humid, dt) is not True:
+			while writeToDB(avg_temp, avg_humid, str(dt)) is not True:
 				time.sleep(5)
+
+			print('vals written to db')
 
 			#Reset Loop Variables
 			running_total_temp=0
@@ -61,15 +65,17 @@ def mainLoop():
 
 #need to add extra lines to check if data is actually being written.
 def writeToDB(temp, humid, datetime):
-	vals=(temp, humid, datetime, 'FALSE')
+	vals=[float(temp), float(humid), str(datetime), 0]
+	print(vals)
 	try:
 		dbconn=sqlite3.connect(path)
 		c=dbconn.cursor()
-		c.execute('INSERT INTO ENV VALUES (?,?,?,?)', vals)
+		c.execute('INSERT INTO ENV VALUES (NULL,?,?,?,?)', vals)
 		dbconn.commit()
 		dbconn.close()
 		return True
 	except:
+		print("can't write to db")
 		return False
 #start subprocess send.py here
 process=subprocess.Popen(["python3", "write.py"])

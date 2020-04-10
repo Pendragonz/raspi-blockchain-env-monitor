@@ -5,6 +5,8 @@ import sys
 import getopt
 import json
 
+import sqlite3
+
 apiAddr = None
 server = None
 NET_PASS = None
@@ -60,12 +62,13 @@ def accReady():
 		writeStatus("account not found/balance is 0")
 		return False
 
-def sendTXN():
+def sendTXN(txn):
 	#code
 	#response.code?
 	response=server.submit_transaction(txn)
 	if response != 200:
-		return False
+		return True
+	print("sent")
 	return True
 
 def getNextData():
@@ -73,18 +76,27 @@ def getNextData():
 		#try to pull data
 		try:
 			dbconn=sqlite3.connect("envdata.db")
-			c=dbconn.cursor()
-			c.execute('''SELECT min(id),temp,humid,datetime FROM ENV WHERE sent=FALSE;''')
-			db_res=c.fetchall()
-			dbconn.close()
-
-			retstr=str(db_res[0][3])
-			retstr+="t:"+str(db_res[0][1])
-			retstr+="h:"+str(db_res[0][2])
-
-			return retstr
+			try:
+				c=dbconn.cursor()
+				c.execute('''SELECT min(id), temp, humid, datetime FROM ENV WHERE sent=0''')
+				db_res=c.fetchall()
+				print("SQL Queried")
+				if db_res[0][0] is not None:
+					retstr=str(db_res[0][3])
+					retstr+="t:"+str(db_res[0][1])
+					retstr+="h:"+str(db_res[0][2])
+					print("Data exists")
+					retstr=[retstr, db_res[0][0]]
+					return retstr
+				else:
+					print("up to date")
+			except Exception as e:
+				print(e)
+			finally:
+				dbconn.close()
+		
 		except:
-			print("err")
+			print("IO Error")
 		#if error/nothing to send
 		time.sleep(20)
 
@@ -93,8 +105,10 @@ def mainLoop():
 	fee=server.fetch_base_fee()
 	#Run everything!
 	while True:
+		print("started mainloop")
 		#Construct TXN
-		memo_to_write=getNextData()
+		data=getNextData()
+		memo_to_write=str(data[0])
 
 		txn=TransactionBuilder(
 			source_account=account,
@@ -110,6 +124,12 @@ def mainLoop():
 		while sendTXN(txn) is False:
 			time.sleep(20)
 
+		dbconn=sqlite3.connect("envdata.db")
+		c=dbconn.cursor()
+		c.execute('UPDATE ENV SET sent=1 WHERE ID=?', [int(data[1])])
+		dbconn.commit()
+		dbconn.close()
+		print("txn sent, db updated")
 
 getKeysSettings()
 
