@@ -140,13 +140,13 @@ def genKeypair( testnet ):
     	f=open("keys.txt", "w")
     	f.write(str)
     	f.close()
-
     	return keypair
+
 	else:
 		with open("keys.txt") as f:
 			keydata=f.read()
 			keydata=[x.strip() for x in keydata.split(,)]
-			return keydata[1]
+			return Keypair.from_secret(keydata[2])
 
 #returns url to stellar expert explorer.
 def getExplorerURL( isTestnet, pubkey):
