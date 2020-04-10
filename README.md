@@ -1,4 +1,4 @@
-# raspi-blockchain-temp-sensor
+# raspi-blockchain-env-monitor
 
 This repo is a compilation of the code written as part of my Individual Project for my final year at university.
 
