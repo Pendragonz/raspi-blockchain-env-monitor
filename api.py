@@ -48,7 +48,7 @@ def verify_password(username, password):
 @app.route('/run/testnet')
 @auth.login_required
 def testnetService():
-	global testnetAppRunning, mainnetAppRunning
+	global testnetAppRunning, mainnetAppRunning, process
 	if testnetAppRunning==True:
         	return 'Testnet App already running.'
 	elif mainnetAppRunning==True:
@@ -83,7 +83,7 @@ def getPubKey():
 @app.route('/run/mainnet/<int:temp>/<int:humid>/<int:interval>')
 @auth.login_required
 def mainnetService(temp, humid, interval):
-	global testnetAppRunning, mainnetAppRunning
+	global testnetAppRunning, mainnetAppRunning,process
 	if testnetAppRunning==True:
 		return 'Testnet App already running.'
 	elif mainnetAppRunning==True:
