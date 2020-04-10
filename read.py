@@ -13,7 +13,7 @@ DHT_PIN=4
 
 #Set up run conditions based on parameters TODO
 if len(sys.argv) > 1:
-	INTERVAL=sys.argv[1]
+	INTERVAL=int(sys.argv[1])
 else:
 	INTERVAL=20
 

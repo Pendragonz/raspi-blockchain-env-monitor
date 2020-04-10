@@ -60,10 +60,10 @@ def testnetService(interval):
 		testnetXlmUrl='https://friendbot.stellar.org'
 		response=requests.get(testnetXlmUrl, params={'addr':keys.public_key})
 
-		process=subprocess.Popen(["python3", "read.py", interval])
+		process=subprocess.Popen(["python3", "read.py", str(interval)])
 
 		with open('testnetrunning.txt') as f:
-			f.write(interval)
+			f.write(str(interval))
 
 		testnetAppRunning=True
 		return 'App running on testnet on ' + "<a href=\""+getExplorerURL(True,keys.public_key)+"\">" + keys.public_key+"</a>"
@@ -97,11 +97,11 @@ def mainnetService(interval):
 		keys=genKeypair(False)
 
 		#os.system('nohup python3 ./run.py &')
-		process=subprocess.Popen(["python3", "read.py", interval])
+		process=subprocess.Popen(["python3", "read.py", str(interval)])
 
 		mainnetAppRunning=True
 		with open("mainrunning.txt", "w") as f:
-			f.write(interval)
+			f.write(str(interval))
 
 		return 'running app on mainnet. Please send XLM to: ' + keys.public_key
 
@@ -172,12 +172,12 @@ if os.path.isfile('mainrunning.txt') is True:
 	interval=None
 	with open('mainrunning.txt') as f:
 		interval=f.read()
-	mainnetService(interval)
+	#mainnetService(interval)
 elif os.path.isfile('testnetrunning.txt') is True:
 	interval=None
 	with open('testnetrunning.txt') as f:
 		interval=f.read()
-	testnetService()
+	#testnetService()
 
 
 if __name__ == '__main__':
