@@ -1,7 +1,7 @@
 import Adafruit_DHT
 import time
 from decimal import Decimal
-import from os.path
+import os.path
 import subprocess
 import sqlite3
 
