@@ -129,9 +129,9 @@ def genKeypair( testnet ):
 		keypair = Keypair.random()
 
     	if testnet is True:
-            str="TESTNET,"
+        	str="TESTNET,"
     	else:
-            str="MAINNET,"
+        	str="MAINNET,"
 
     	str+=keypair.public_key
     	str+=","
