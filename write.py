@@ -3,16 +3,13 @@ import requests
 import time
 import sys
 import getopt
-from decimal import Decimal
 
-#Define sensor type and GPIO pin
-DHT_SENSOR=Adafruit_DHT.DHT22
-DHT_PIN=4
+#def mainloop
+#def balance_check
+#def gen_txn
+#def send_txn
 
-#Set up run conditions based on parameters TODO
-INTERVAL=20
-TEMP_ON=True
-HUMID_ON=True
+
 
 
 #Load keypair and settings from filesystem
