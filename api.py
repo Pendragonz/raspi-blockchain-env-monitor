@@ -5,9 +5,12 @@ import os
 
 from stellar_sdk import Server, Keypair, TransactionBuilder, Network, Account
 import requests
+import subprocess
 
 app = Flask(__name__)
 auth=HTTPBasicAuth()
+
+process=None
 
 userRegistered=False
 testnetAppRunning=False
@@ -45,7 +48,7 @@ def verify_password(username, password):
 @app.route('/run/testnet')
 @auth.login_required
 def testnetService():
-	global testnetAppRunning, mainnetAppRunning
+	global testnetAppRunning, mainnetAppRunning, process
 	if testnetAppRunning==True:
         	return 'Testnet App already running.'
 	elif mainnetAppRunning==True:
@@ -57,7 +60,10 @@ def testnetService():
 		response=requests.get(testnetXlmUrl, params={'addr':keys.public_key})
 
 		#os.system('nohup python3 ./repTnTx.py &')
-		os.system('nohup python3 ./run.py &')
+		#os.system('nohup python3 ./run.py &')
+
+		process=subprocess.Popen(["python3", "read.py"])
+
 		testnetAppRunning=True
 		return 'App running on testnet on ' + "<a href=\""+getExplorerURL(True,keys.public_key)+"\">" + keys.public_key+"</a>"
 
@@ -77,7 +83,7 @@ def getPubKey():
 @app.route('/run/mainnet/<int:temp>/<int:humid>/<int:interval>')
 @auth.login_required
 def mainnetService(temp, humid, interval):
-	global testnetAppRunning, mainnetAppRunning
+	global testnetAppRunning, mainnetAppRunning,process
 	if testnetAppRunning==True:
 		return 'Testnet App already running.'
 	elif mainnetAppRunning==True:
@@ -92,7 +98,10 @@ def mainnetService(temp, humid, interval):
 			return 'interval can not be less than 2 seconds'
 
 		keys=genKeypair(False)
-		os.system('nohup python3 ./run.py &')
+
+		#os.system('nohup python3 ./run.py &')
+		process=subprocess.Popen(["python3", "read.py"])
+
 		mainnetAppRunning=True
 
 		return 'running app on mainnet. Please send XLM to: ' + keys.public_key
@@ -101,33 +110,43 @@ def mainnetService(temp, humid, interval):
 @app.route('/reset')
 @auth.login_required
 def reset():
-	os.system("rm nohup.txt")
-	os.system("rm pubkey.txt")
+	#os.system("rm nohup.txt")
+	#os.system("rm pubkey.txt")
 	global users, mainnetRunning, testnetRunning, userRegistered
 	users = {}
 	mainnetRunning=False
 	testnetRunning=False
 	userRegistered=False
 
+	process.terminate()
+
+	return "users deleted, processes stopped."
 
 #testnet must be a boolean value. True for testnet, False for mainnet
 def genKeypair( testnet ):
-        keypair = Keypair.random()
 
-        if testnet is True:
-                str="TESTNET,"
-        else:
-                str="MAINNET,"
+	if KEY_GEN is not True:
+		keypair = Keypair.random()
+		
+		if testnet is True:
+			str="TESTNET,"
+		else:
+			str="MAINNET,"
 
-        str+=keypair.public_key
-        str+=","
-        str+=keypair.secret
+		str+=keypair.public_key
+		str+=","
+		str+=keypair.secret
 
-        f=open("keys.txt", "w")
-        f.write(str)
-        f.close()
+		f=open("keys.txt", "w")
+		f.write(str)
+		f.close()
+		return keypair
 
-        return keypair
+	else:
+		with open("keys.txt") as f:
+			keydata=f.read()
+			keydata=[x.strip() for x in keydata.split(',')]
+			return Keypair.from_secret(keydata[2])
 
 #returns url to stellar expert explorer.
 def getExplorerURL( isTestnet, pubkey):
@@ -144,8 +163,9 @@ def getExplorerURL( isTestnet, pubkey):
 	return link
 
 
+#add in condition down here to check for existance of keys.txt
 
+KEY_GEN=True
 
 if __name__ == '__main__':
 	app.run(port=5000, host='0.0.0.0', debug=True)
-
