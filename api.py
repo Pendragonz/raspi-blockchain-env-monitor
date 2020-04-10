@@ -60,7 +60,7 @@ def testnetService(interval):
 		testnetXlmUrl='https://friendbot.stellar.org'
 		response=requests.get(testnetXlmUrl, params={'addr':keys.public_key})
 
-		process=subprocess.Popen(["python3", "read.py"])
+		process=subprocess.Popen(["python3", "read.py", interval])
 
 		with open('testnetrunning.txt') as f:
 			f.write(interval)
