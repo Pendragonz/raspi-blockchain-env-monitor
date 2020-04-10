@@ -14,7 +14,7 @@ INTERVAL=20
 
 #setup DB.
 path="envdata.db"
-if !os.path.isFile(path):
+if os.path.isFile(path) is not True:
 	dbconn=sqlite3.connect(path)
 	c = dbconn.cursor()
 	c.execute('''CREATE TABLE ENV (temp FLOAT, humid FLOAT, datetime TEXT, sent BOOL)''')
