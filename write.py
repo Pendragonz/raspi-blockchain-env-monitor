@@ -5,7 +5,10 @@ import sys
 import getopt
 import json
 
-apiAddr, server, NET_PASS, keypair = None
+apiAddr = None
+server = None
+NET_PASS = None
+keypair = None
 
 #sets up global variables
 def getKeysSettings():
@@ -80,8 +83,8 @@ def getNextData():
 			retstr+="h:"+str(db_res[0][2])
 
 			return retstr
-		except Error as e:
-			print(e)
+		except:
+			print("err")
 		#if error/nothing to send
 		time.sleep(20)
 
@@ -104,7 +107,7 @@ def mainLoop():
 
 		#sign and submit
 		txn.sign(keypair)
-		while sendTXN(txn)=False:
+		while sendTXN(txn) is False:
 			time.sleep(20)
 
 

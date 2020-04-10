@@ -14,7 +14,7 @@ INTERVAL=20
 
 #setup DB.
 path="envdata.db"
-if os.path.isFile(path) is not True:
+if os.path.isfile(path) is not True:
 	dbconn=sqlite3.connect(path)
 	c = dbconn.cursor()
 	c.execute('''CREATE TABLE ENV (temp FLOAT, humid FLOAT, datetime TEXT, sent BOOL)''')
@@ -61,7 +61,7 @@ def mainLoop():
 
 #need to add extra lines to check if data is actually being written.
 def writeToDB(temp, humid, datetime):
-	vals=(temp, humid, datetime, FALSE)
+	vals=(temp, humid, datetime, 'FALSE')
 	try:
 		dbconn=sqlite3.connect(path)
 		c=dbconn.cursor()
