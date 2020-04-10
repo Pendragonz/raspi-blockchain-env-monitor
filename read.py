@@ -2,7 +2,7 @@ import Adafruit_DHT
 import time
 from decimal import Decimal
 from os.path
-
+import subprocess
 import sqlite3
 
 #Define sensor type and GPIO pin
@@ -11,7 +11,6 @@ DHT_PIN=4
 
 #Set up run conditions based on parameters TODO
 INTERVAL=20
-#TOTAL_RECORDS=0
 
 #setup DB.
 path="envdata.db"
@@ -22,7 +21,7 @@ if !os.path.isFile(path):
 	dbconn.commit()
 	dbconn.close()
 
-def foreverLoop():
+def mainLoop():
 
 	num_readings=0
 	start=time.time()
@@ -46,22 +45,32 @@ def foreverLoop():
 			#Limit avgs to  2dp
 			avg_temp=round(Decimal(avg_temp), 2)
 			avg_humid=round(Decimal(avg_humid), 2)
-
+			#format date time to;  Month/Day;hour:minute:second e.g. 10/12;14:45:12
 			t_=time.localtime()[1:6]
+			dt=str(t_[1]) + "/"+ str(t_[0]) + ";" + str(t_[2])+":"+str(t_[3])+":"+str(t_[4])
 
-			#Reset Loop Variables TODO turn this into a function.
+			#Keep trying to add it to the db
+			while writeToDB(avg_temp, avg_humid, dt) is not True:
+				time.sleep(5)
+
+			#Reset Loop Variables
 			running_total_temp=0
 			running_total_humid=0
 			num_readings=0
 			end=time.time()+INTERVAL
 
+#need to add extra lines to check if data is actually being written.
 def writeToDB(temp, humid, datetime):
 	vals=(temp, humid, datetime, FALSE)
-	dbconn=sqlite3.connect(path)
-	c=dbconn.cursor()
-	c.execute('INSERT INTO ENV VALUES (?,?,?,?)', vals)
-	dbconn.commit()
-	dbconn.close()
-
+	try:
+		dbconn=sqlite3.connect(path)
+		c=dbconn.cursor()
+		c.execute('INSERT INTO ENV VALUES (?,?,?,?)', vals)
+		dbconn.commit()
+		dbconn.close()
+		return True
+	except:
+		return False
 #start subprocess send.py here
-foreverLoop()
+process=subprocess.Popen(["python3", "write.py"])
+mainLoop()
