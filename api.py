@@ -127,25 +127,25 @@ def genKeypair( testnet ):
 
 	if KEY_GEN is not True:
 		keypair = Keypair.random()
+		
+		if testnet is True:
+			str="TESTNET,"
+		else:
+			str="MAINNET,"
 
-    	if testnet is True:
-        	str="TESTNET,"
-    	else:
-        	str="MAINNET,"
+		str+=keypair.public_key
+		str+=","
+		str+=keypair.secret
 
-    	str+=keypair.public_key
-    	str+=","
-    	str+=keypair.secret
-
-    	f=open("keys.txt", "w")
-    	f.write(str)
-    	f.close()
-    	return keypair
+		f=open("keys.txt", "w")
+		f.write(str)
+		f.close()
+		return keypair
 
 	else:
 		with open("keys.txt") as f:
 			keydata=f.read()
-			keydata=[x.strip() for x in keydata.split(,)]
+			keydata=[x.strip() for x in keydata.split(',')]
 			return Keypair.from_secret(keydata[2])
 
 #returns url to stellar expert explorer.
