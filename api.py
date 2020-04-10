@@ -60,7 +60,7 @@ def testnetService(interval):
 		testnetXlmUrl='https://friendbot.stellar.org'
 		response=requests.get(testnetXlmUrl, params={'addr':keys.public_key})
 
-		process=subprocess.Popen(["python3", "read.py", str(interval)])
+		runApp(interval)
 
 		with open('testnetrunning.txt') as f:
 			f.write(str(interval))
@@ -96,8 +96,7 @@ def mainnetService(interval):
 
 		keys=genKeypair(False)
 
-		#os.system('nohup python3 ./run.py &')
-		process=subprocess.Popen(["python3", "read.py", str(interval)])
+		runApp(interval)
 
 		mainnetAppRunning=True
 		with open("mainrunning.txt", "w") as f:
@@ -160,6 +159,10 @@ def getExplorerURL( isTestnet, pubkey):
 
 
 	return link
+
+def runApp(interval):
+	process=subprocess.Popen(["python3", "read.py", str(interval)])
+
 
 
 if os.path.isfile('keys.txt') is True:
