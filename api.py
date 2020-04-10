@@ -46,9 +46,9 @@ def verify_password(username, password):
 		return False
 
 
-@app.route('/run/testnet')
+@app.route('/run/testnet/<int:interval>')
 @auth.login_required
-def testnetService():
+def testnetService(interval):
 	global testnetAppRunning, mainnetAppRunning, process
 	if testnetAppRunning==True:
         	return 'Testnet App already running.'
@@ -60,10 +60,10 @@ def testnetService():
 		testnetXlmUrl='https://friendbot.stellar.org'
 		response=requests.get(testnetXlmUrl, params={'addr':keys.public_key})
 
-		#os.system('nohup python3 ./repTnTx.py &')
-		#os.system('nohup python3 ./run.py &')
-
 		process=subprocess.Popen(["python3", "read.py"])
+
+		with open('testnetrunning.txt') as f:
+			f.write(interval)
 
 		testnetAppRunning=True
 		return 'App running on testnet on ' + "<a href=\""+getExplorerURL(True,keys.public_key)+"\">" + keys.public_key+"</a>"
@@ -81,9 +81,9 @@ def getPubKey():
 	return processedText[0] + ": " + processedText[1]
 
 
-@app.route('/run/mainnet/<int:temp>/<int:humid>/<int:interval>')
+@app.route('/run/mainnet/<int:interval>')
 @auth.login_required
-def mainnetService(temp, humid, interval):
+def mainnetService(interval):
 	global testnetAppRunning, mainnetAppRunning,process
 	if testnetAppRunning==True:
 		return 'Testnet App already running.'
@@ -91,10 +91,6 @@ def mainnetService(temp, humid, interval):
 		return 'mainnet app is already running'
 	else:
 		#Check Inputs
-		if temp < 0 or temp >= 2:
-			return 'temp variable out of bounds. Should be 0 or 1'
-		if humid < 0 or humid >= 2:
-			return 'humid variable out of bounds. Should be 0 or 1'
 		if interval <= 1:
 			return 'interval can not be less than 2 seconds'
 
@@ -104,6 +100,8 @@ def mainnetService(temp, humid, interval):
 		process=subprocess.Popen(["python3", "read.py"])
 
 		mainnetAppRunning=True
+		with open("mainrunning.txt", "w") as f:
+			f.write(interval)
 
 		return 'running app on mainnet. Please send XLM to: ' + keys.public_key
 
@@ -164,7 +162,6 @@ def getExplorerURL( isTestnet, pubkey):
 	return link
 
 
-#add in condition down here to check for existance of keys.txt
 if os.path.isfile('keys.txt') is True:
 	KEY_GEN=True
 else:
@@ -172,8 +169,14 @@ else:
 
 if os.path.isfile('mainrunning.txt') is True:
 	#read the file and send data to
-	mainnetService(1,1,3)
+	interval=None
+	with open('mainrunning.txt') as f:
+		interval=f.read()
+	mainnetService(interval)
 elif os.path.isfile('testnetrunning.txt') is True:
+	interval=None
+	with open('testnetrunning.txt') as f:
+		interval=f.read()
 	testnetService()
 
 
