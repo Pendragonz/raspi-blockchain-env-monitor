@@ -3,15 +3,11 @@ import requests
 import time
 import sys
 import getopt
-
+import json
 
 apiAddr, server, NET_PASS, keypair = None
 
-#def mainloop
-#def balance_check
-#def gen_txn
-#def send_txn
-
+#sets up global variables
 def getKeysSettings():
 	global apiAddr, server, NET_PASS, keypair
 
@@ -23,7 +19,6 @@ def getKeysSettings():
 	#Process data and set up global variables
 	listKeyData=[x.strip() for x in keyData.split(',')]
 
-	#CHANGE URL TO MAINNET URL!
 	if listKeyData[0] == "MAINNET":
 		apiAddr="https://horizon.stellar.org/"
 		server=Server(apiAddr)
@@ -34,57 +29,33 @@ def getKeysSettings():
 		NET_PASS=Network.TESTNET_NETWORK_PASSPHRASE
 
 	keypair=Keypair.from_secret(listKeyData[2])
-	
-#check if accound exists and balance is >= 1.5 or loop until it is.
-balance_valid=False
-while balance_valid is not True:
+
+def writeStatus(txt):
+	with open('status.txt', 'w') as f:
+		f.write(txt)
+
+
+def accReady():
 	res=requests.get(apiAddr+"accounts/"+keypair.public_key)
 	if res.status_code == 200:
-		print("address valid")
 		try:
 			res_as_json=json.loads(res.text)
 			bal=res_as_json["balances"][0]['balance']
-			print("balance: " + bal)
 		except:
-			print("error fetching balance. balance likely 0. please send at least 1.5XLM")
-			time.sleep(20)
+			print("error fetching balance.")
+			return False
 		else:
-			if float(bal) >= 2.0:
+			if float(bal) >= 1.1:
 				#everything is perfect, break out of loop
 				balance_valid=True
+				writeStatus("account valid, balance sufficient;"+str(bal))
+				return True
 			else:
-				print("balance not high enough")
-				time.sleep(20)
+				writeStatus("balance="+str(bal)+". Please add more XLM")
+				return False
 	else:
-		print("err fetching account. stat code: " + res.status_code + " account possibly not created")
-		time.sleep(20)
-
-#Run everything!
-while True:
-	#Construct TXN
-	t_=time.localtime()[1:6]
-
-	memo_to_write
-	memo_to_write
-
-	account=server.load_account(keypair.public_key)
-
-	txn=TransactionBuilder(
-		source_account=account,
-		network_passphrase=NET_PASS,
-		base_fee=server.fetch_base_fee()
-		).add_text_memo(memo_to_write).append_payment_op(
-			destination=keypair.public_key,
-			asset_code="XLM",
-			amount="1").set_timeout(45).build()
-
-	TOTAL_TXNS_CREATED=TOTAL_TXNS_CREATED+1
-
-	#sign and submit
-	txn.sign(keypair)
-	while sendTXN(txn)=False:
-		time.sleep(20)
-
+		writeStatus("account not found/balance is 0")
+		return False
 
 def sendTXN():
 	#code
@@ -94,4 +65,53 @@ def sendTXN():
 		return False
 	return True
 
+def getNextData():
+	while True:
+		#try to pull data
+		try:
+			dbconn=sqlite3.connect("envdata.db")
+			c=dbconn.cursor()
+			c.execute('''SELECT min(id),temp,humid,datetime FROM envdata WHERE sent=FALSE''')
+			db_res=c.fetchall()
+			dbconn.close()
+
+			retstr=str(db_res[0][3])
+			retstr+="t:"+str(db_res[0][1])
+			retstr+="h:"+str(db_res[0][2])
+
+			return retstr
+		except Error as e:
+			print(e)
+		#if error/nothing to send
+		time.sleep(20)
+
+def mainLoop():
+	account=server.load_account(keypair.public_key)
+	fee=server.fetch_base_fee()
+	#Run everything!
+	while True:
+		#Construct TXN
+		memo_to_write=getNextData()
+
+		txn=TransactionBuilder(
+			source_account=account,
+			network_passphrase=NET_PASS,
+			base_fee=fee
+			).add_text_memo(memo_to_write).append_payment_op(
+				destination=keypair.public_key,
+				asset_code="XLM",
+				amount="0.1").set_timeout(100000).build()
+
+		#sign and submit
+		txn.sign(keypair)
+		while sendTXN(txn)=False:
+			time.sleep(20)
+
+
 getKeysSettings()
+
+#wait until account exists and has sufficient starting balance
+while accReady() is not True:
+	time.sleep(20)
+
+mainLoop()
