@@ -97,7 +97,7 @@ def mainnetService(interval):
 		keys=genKeypair(False)
 
 		#os.system('nohup python3 ./run.py &')
-		process=subprocess.Popen(["python3", "read.py"])
+		process=subprocess.Popen(["python3", "read.py", interval])
 
 		mainnetAppRunning=True
 		with open("mainrunning.txt", "w") as f:
