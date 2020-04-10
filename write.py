@@ -4,34 +4,37 @@ import time
 import sys
 import getopt
 
+
+apiAddr, server, NET_PASS, keypair = None
+
 #def mainloop
 #def balance_check
 #def gen_txn
 #def send_txn
 
+def getKeysSettings():
+	global apiAddr, server, NET_PASS, keypair
 
+	#Load keypair and settings from filesystem
+	f=open('keys.txt', 'r')
+	keyData=f.read()
+	f.close()
 
+	#Process data and set up global variables
+	listKeyData=[x.strip() for x in keyData.split(',')]
 
-#Load keypair and settings from filesystem
-f=open('keys.txt', 'r')
-keyData=f.read()
-f.close()
+	#CHANGE URL TO MAINNET URL!
+	if listKeyData[0] == "MAINNET":
+		apiAddr="https://horizon.stellar.org/"
+		server=Server(apiAddr)
+		NET_PASS=Network.PUBLIC_NETWORK_PASSPHRASE
+	else:
+		apiAddr="https://horizon-testnet.stellar.org/"
+		server=Server(apiAddr)
+		NET_PASS=Network.TESTNET_NETWORK_PASSPHRASE
 
-#Process data and set up global variables
-listKeyData=[x.strip() for x in keyData.split(',')]
-
-#CHANGE URL TO MAINNET URL!
-if listKeyData[0] == "MAINNET":
-	apiAddr="https://horizon.stellar.org/"
-	server=Server(apiAddr)
-	NET_PASS=Network.PUBLIC_NETWORK_PASSPHRASE
-else:
-	apiAddr="https://horizon-testnet.stellar.org/"
-	server=Server(apiAddr)
-	NET_PASS=Network.TESTNET_NETWORK_PASSPHRASE
-
-keypair=Keypair.from_secret(listKeyData[2])
-
+	keypair=Keypair.from_secret(listKeyData[2])
+	
 #check if accound exists and balance is >= 1.5 or loop until it is.
 balance_valid=False
 while balance_valid is not True:
@@ -90,3 +93,5 @@ def sendTXN():
 	if response != 200:
 		return False
 	return True
+
+getKeysSettings()
