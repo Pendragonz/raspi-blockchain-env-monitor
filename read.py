@@ -5,13 +5,17 @@ from decimal import Decimal
 import os.path
 import subprocess
 import sqlite3
+import sys
 
 #Define sensor type and GPIO pin
 DHT_SENSOR=Adafruit_DHT.DHT22
 DHT_PIN=4
 
 #Set up run conditions based on parameters TODO
-INTERVAL=20
+if len(sys.argv) > 1:
+	INTERVAL=sys.argv[1]
+else:
+	INTERVAL=20
 
 #setup DB.
 path="envdata.db"
