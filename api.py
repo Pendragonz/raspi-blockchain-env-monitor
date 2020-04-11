@@ -154,7 +154,7 @@ def genKeypair( testnet ):
 
 #needs testing. i.e. if status.txt doesn't exist, what happens?
 #need to add text saying what's running too
-@app.route()('/get/status')
+@app.route('/get/status')
 def getStatus():
 	with open('status.txt', 'r') as f:
 		ret=f.read()
