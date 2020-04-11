@@ -1,3 +1,4 @@
 txs/
 *.out
 *.txt
+*.db
