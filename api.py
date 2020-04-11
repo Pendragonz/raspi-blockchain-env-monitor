@@ -3,6 +3,7 @@ from flask_httpauth import HTTPBasicAuth
 from flask_restful import Api, Resource
 import os
 import os.path
+import signal
 
 from stellar_sdk import Server, Keypair, TransactionBuilder, Network, Account
 import requests
@@ -110,13 +111,14 @@ def mainnetService(interval):
 def reset():
 	#os.system("rm nohup.txt")
 	#os.system("rm pubkey.txt")
-	global users, mainnetRunning, testnetRunning, userRegistered
+	global users, mainnetRunning, testnetRunning, userRegistered, process
 	users = {}
 	mainnetRunning=False
 	testnetRunning=False
 	userRegistered=False
 
 	process.terminate()
+	os.kill(process.pid, signal.SIGINT)
 
 	return "users deleted, processes stopped."
 
@@ -146,6 +148,14 @@ def genKeypair( testnet ):
 			keydata=[x.strip() for x in keydata.split(',')]
 			return Keypair.from_secret(keydata[2])
 
+#needs testing. i.e. if status.txt doesn't exist, what happens?
+#need to add text saying what's running too
+@app.route()('/get/status')
+def getStatus():
+	with open('status.txt', 'r') as f:
+		ret=f.read()
+	return ret
+
 #returns url to stellar expert explorer.
 def getExplorerURL( isTestnet, pubkey):
 
@@ -161,6 +171,7 @@ def getExplorerURL( isTestnet, pubkey):
 	return link
 
 def runApp(interval):
+	global process
 	process=subprocess.Popen(["python3", "read.py", str(interval)])
 
 

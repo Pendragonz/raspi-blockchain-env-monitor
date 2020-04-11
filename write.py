@@ -53,7 +53,7 @@ def accReady():
 			if float(bal) >= 1.1:
 				#everything is perfect, break out of loop
 				balance_valid=True
-				writeStatus("account valid, balance sufficient;"+str(bal))
+				writeStatus("account valid, balance sufficient on launch;"+str(bal))
 				return True
 			else:
 				writeStatus("balance="+str(bal)+". Please add more XLM")
