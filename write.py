@@ -63,12 +63,11 @@ def accReady():
 		return False
 
 def sendTXN(txn):
-	#code
-	#response.code?
+	#CHECK RESPONSE CODE AND HANDLE ACCORDINGLY.
 	response=server.submit_transaction(txn)
-	if response != 200:
-		return True
-	print("sent")
+	#if response.status != 200:
+	#	return False
+	print(response)
 	return True
 
 def getNextData():
@@ -102,10 +101,11 @@ def getNextData():
 
 def mainLoop():
 	account=server.load_account(keypair.public_key)
+	print("account fetched")
 	fee=server.fetch_base_fee()
 	#Run everything!
 	while True:
-		print("started mainloop")
+		print("main loop")
 		#Construct TXN
 		data=getNextData()
 		memo_to_write=str(data[0])

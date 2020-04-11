@@ -175,12 +175,12 @@ if os.path.isfile('mainrunning.txt') is True:
 	interval=None
 	with open('mainrunning.txt') as f:
 		interval=f.read()
-	#mainnetService(interval)
+	runApp(interval)
 elif os.path.isfile('testnetrunning.txt') is True:
 	interval=None
 	with open('testnetrunning.txt') as f:
 		interval=f.read()
-	#testnetService()
+	runApp(interval)
 
 
 if __name__ == '__main__':
