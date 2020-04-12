@@ -12,6 +12,10 @@ from stellar_sdk import Server, Keypair, TransactionBuilder, Network, Account
 import requests
 import subprocess
 
+import sqlite3
+from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash
+
 app = Flask(__name__)
 auth=HTTPBasicAuth()
 
@@ -21,7 +25,26 @@ userRegistered=False
 testnetAppRunning=False
 mainnetAppRunning=False
 
-users = {}
+def resetUserDB():
+	userdb=sqlite3.connect("users.db")
+	curs=userdb.cursor()
+	curs.execute('''CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, pwhash TEXT)''')
+	userdb.commit()
+	userdb.close()
+
+if os.path.isfile('users.db') is not True:
+	resetUserDB()
+else:
+	try:
+		userdb=sqlite3.connect("users.db")
+		curs=userdb.cusrsor()
+		curs.execute('SELECT * FROM users')
+		row=curs.fetchone()
+		if row is not None:
+			userRegistered=True
+		userdb.close()
+	except:
+		resetUserDB()
 
 @app.route('/')
 @app.route('/home')
@@ -33,23 +56,36 @@ def index():
 #Also needs work.
 @app.route('/register/<username>/<password>')
 def register(username, password):
-	global users, userRegistered
+	global userRegistered
 	if userRegistered==True:
 		return 'Admin already registered.'
 	else:
-		users={username:password}
+		#users={username:password}
+		pwhash=generate_password_hash(password)
+		vals=[username, pwhash]
+		userdb=sqlite3.connect("users.db")
+		curs=userdb.cursor()
+		curs.execute('INSERT INTO users VALUES(NULL, ?, ?)', vals)
+		userdb.commit()
+		userdb.close()
+
 		userRegistered=True
 		return 'user registered! welcome ' + username
 
-#Needs a LOT of work.
+
 @auth.verify_password
 def verify_password(username, password):
-	global users
-	if username in users:
-		return True
+	userdb=sqlite3.connect("users.db")
+	curs=userdb.cursor()
+	curs.execute('SELECT * FROM users WHERE username=?', [username])
+	res=curs.fetchone()
+	userdb.close()
+
+	if res is not None:
+		if res[1] == username and generate_password_hash( res[2] ):
+			return True
 	else:
 		return False
-
 
 @app.route('/run/testnet/<int:interval>')
 @auth.login_required
@@ -113,16 +149,20 @@ def mainnetService(interval):
 @app.route('/reset')
 @auth.login_required
 def reset():
-	#os.system("rm nohup.txt")
-	#os.system("rm pubkey.txt")
-	global users, mainnetRunning, testnetRunning, userRegistered, process
-	users = {}
+
+	global mainnetRunning, testnetRunning, userRegistered, process
+
 	mainnetRunning=False
 	testnetRunning=False
 	userRegistered=False
 
+	#THIS DOESN'T WORK. FIGURE OUT WHY.
 	process.terminate()
 	os.kill(process.pid, signal.SIGINT)
+
+	resetUserDB()
+
+	#ALSO NEED TO DELETE/MOVE DB FILE.
 
 	return "users deleted, processes stopped."
 
