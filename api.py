@@ -37,7 +37,7 @@ if os.path.isfile('users.db') is not True:
 else:
 	try:
 		userdb=sqlite3.connect("users.db")
-		curs=userdb.cusrsor()
+		curs=userdb.cursor()
 		curs.execute('SELECT * FROM users')
 		row=curs.fetchone()
 		if row is not None:
