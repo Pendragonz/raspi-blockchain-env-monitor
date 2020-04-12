@@ -1,3 +1,4 @@
+
 from flask import Flask
 
 from flask import render_template
@@ -28,6 +29,10 @@ mainnetAppRunning=False
 def resetUserDB():
 	userdb=sqlite3.connect("users.db")
 	curs=userdb.cursor()
+
+	curs.execute('''DROP TABLE IF EXISTS users''')
+	userdb.commit()
+
 	curs.execute('''CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, pwhash TEXT)''')
 	userdb.commit()
 	userdb.close()
@@ -103,7 +108,7 @@ def testnetService(interval):
 
 		runApp(interval)
 
-		with open('testnetrunning.txt') as f:
+		with open('testnetrunning.txt', "w") as f:
 			f.write(str(interval))
 
 		testnetAppRunning=True
@@ -150,17 +155,22 @@ def mainnetService(interval):
 @auth.login_required
 def reset():
 
-	global mainnetRunning, testnetRunning, userRegistered, process
+	global mainnetAppRunning, testnetAppRunning, userRegistered, process
 
-	mainnetRunning=False
-	testnetRunning=False
+	if mainnetAppRunning is True:
+		os.remove('mainrunning.txt')
+		mainnetAppRunning=False
+
+	if testnetAppRunning is True:
+		os.remove('testnetrunning.txt')
+		testnetAppRunning=False
+
 	userRegistered=False
+	resetUserDB()
 
 	#THIS DOESN'T WORK. FIGURE OUT WHY.
 	process.terminate()
-	os.kill(process.pid, signal.SIGINT)
-
-	resetUserDB()
+	process.wait()
 
 	#ALSO NEED TO DELETE/MOVE DB FILE.
 
@@ -216,7 +226,7 @@ def getExplorerURL( isTestnet, pubkey):
 
 def runApp(interval):
 	global process
-	process=subprocess.Popen(["python3", "read.py", str(interval)])
+	process=subprocess.Popen(["python3", "read.py", str(interval)], shell=False)
 
 
 
@@ -231,11 +241,13 @@ if os.path.isfile('mainrunning.txt') is True:
 	with open('mainrunning.txt') as f:
 		interval=f.read()
 	runApp(interval)
+	mainnetAppRunning=True
 elif os.path.isfile('testnetrunning.txt') is True:
 	interval=None
 	with open('testnetrunning.txt') as f:
 		interval=f.read()
 	runApp(interval)
+	testnetAppRunning=True
 
 
 if __name__ == '__main__':
