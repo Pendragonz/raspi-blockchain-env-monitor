@@ -26,6 +26,7 @@ testnetAppRunning=False
 mainnetAppRunning=False
 
 def resetUserDB():
+	global userRegistered
 	userdb=sqlite3.connect("users.db")
 	curs=userdb.cursor()
 
@@ -35,6 +36,7 @@ def resetUserDB():
 	curs.execute('''CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, pwhash TEXT)''')
 	userdb.commit()
 	userdb.close()
+	userRegistered=False
 
 if os.path.isfile('users.db') is not True:
 	resetUserDB()
@@ -61,22 +63,10 @@ def index():
 @app.route('/register')
 def register():
 	global userRegistered
-	#if userRegistered==True:
-	#	return 'Admin already registered.'
-	#else:
-	#	#users={username:password}
-	#	pwhash=generate_password_hash(password)
-	#	vals=[username, pwhash]
-	#	userdb=sqlite3.connect("users.db")
-	#	curs=userdb.cursor()
-	#	curs.execute('INSERT INTO users VALUES(NULL, ?, ?)', vals)
-	#	userdb.commit()
-	#	userdb.close()
-
-	#	userRegistered=True
-	#	return 'user registered! welcome ' + username
-
-	return render_template("register.html")
+	if userRegistered==True:
+		return 'Admin already registered.'
+	else:
+		return render_template("register.html")
 
 @app.route('/register_submit', methods=['POST'])
 def register_submission():
