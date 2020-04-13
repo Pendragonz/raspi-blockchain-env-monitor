@@ -1,6 +1,9 @@
-from flask import Flask
+
+from flask import Flask, render_template, request
+
+
 from flask_httpauth import HTTPBasicAuth
-from flask_restful import Api, Resource
+
 import os
 import os.path
 import signal
@@ -8,6 +11,10 @@ import signal
 from stellar_sdk import Server, Keypair, TransactionBuilder, Network, Account
 import requests
 import subprocess
+
+import sqlite3
+from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash
 
 app = Flask(__name__)
 auth=HTTPBasicAuth()
@@ -18,34 +25,95 @@ userRegistered=False
 testnetAppRunning=False
 mainnetAppRunning=False
 
-users = {}
+def resetUserDB():
+	userdb=sqlite3.connect("users.db")
+	curs=userdb.cursor()
+
+	curs.execute('''DROP TABLE IF EXISTS users''')
+	userdb.commit()
+
+	curs.execute('''CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, pwhash TEXT)''')
+	userdb.commit()
+	userdb.close()
+
+if os.path.isfile('users.db') is not True:
+	resetUserDB()
+else:
+	try:
+		userdb=sqlite3.connect("users.db")
+		curs=userdb.cursor()
+		curs.execute('SELECT * FROM users')
+		row=curs.fetchone()
+		if row is not None:
+			userRegistered=True
+		userdb.close()
+	except:
+		resetUserDB()
 
 @app.route('/')
 @app.route('/home')
 @app.route('/index')
 def index():
+	return render_template("index.html")
 	return 'XLM Environment Monitor api is running. View documentation here; '
 
 #Also needs work.
-@app.route('/register/<username>/<password>')
-def register(username, password):
-	global users, userRegistered
-	if userRegistered==True:
-		return 'Admin already registered.'
-	else:
-		users={username:password}
-		userRegistered=True
-		return 'user registered! welcome ' + username
+@app.route('/register')
+def register():
+	global userRegistered
+	#if userRegistered==True:
+	#	return 'Admin already registered.'
+	#else:
+	#	#users={username:password}
+	#	pwhash=generate_password_hash(password)
+	#	vals=[username, pwhash]
+	#	userdb=sqlite3.connect("users.db")
+	#	curs=userdb.cursor()
+	#	curs.execute('INSERT INTO users VALUES(NULL, ?, ?)', vals)
+	#	userdb.commit()
+	#	userdb.close()
 
-#Needs a LOT of work.
-@auth.verify_password
-def verify_password(username, password):
-	global users
-	if username in users:
+	#	userRegistered=True
+	#	return 'user registered! welcome ' + username
+
+	return render_template("register.html")
+
+@app.route('/register_submit', methods=['POST'])
+def register_submission():
+	global userRegistered
+	if userRegistered == True:
+		return "err user already registered. Please /reset to register the new admin."
+	add_user_to_db(request.form["username"], request.form["password"])
+	return "Admin: " + request.form["username"] + " registered successfully."
+
+def add_user_to_db(uname, pword):
+	try:
+		resetUserDB()
+		pwhash=generate_password_hash(pword)
+		vals=[uname, pwhash]
+		userdb=sqlite3.connect("users.db")
+		curs=userdb.cursor()
+		curs.execute("INSERT INTO users VALUES(NULL, ?, ?)", vals)
+		userdb.commit()
+		userdb.close()
 		return True
-	else:
+	except Exception as e:
+		print(e)
 		return False
 
+@auth.verify_password
+def verify_password(username, password):
+	userdb=sqlite3.connect("users.db")
+	curs=userdb.cursor()
+	curs.execute('SELECT * FROM users WHERE username=?', [username])
+	res=curs.fetchone()
+	userdb.close()
+
+	if res is not None:
+		if res[1] == username and generate_password_hash( res[2] ):
+			return True
+	else:
+		return False
 
 @app.route('/run/testnet/<int:interval>')
 @auth.login_required
@@ -63,7 +131,7 @@ def testnetService(interval):
 
 		runApp(interval)
 
-		with open('testnetrunning.txt') as f:
+		with open('testnetrunning.txt', "w") as f:
 			f.write(str(interval))
 
 		testnetAppRunning=True
@@ -109,16 +177,26 @@ def mainnetService(interval):
 @app.route('/reset')
 @auth.login_required
 def reset():
-	#os.system("rm nohup.txt")
-	#os.system("rm pubkey.txt")
-	global users, mainnetRunning, testnetRunning, userRegistered, process
-	users = {}
-	mainnetRunning=False
-	testnetRunning=False
-	userRegistered=False
 
-	process.terminate()
-	os.kill(process.pid, signal.SIGINT)
+	global mainnetAppRunning, testnetAppRunning, userRegistered, process
+
+	if mainnetAppRunning is True:
+		os.remove('mainrunning.txt')
+		mainnetAppRunning=False
+
+	if testnetAppRunning is True:
+		os.remove('testnetrunning.txt')
+		testnetAppRunning=False
+
+	userRegistered=False
+	resetUserDB()
+
+	#THIS DOESN'T WORK. FIGURE OUT WHY.
+	if process is not None:
+		process.terminate()
+		process.wait()
+
+	#ALSO NEED TO DELETE/MOVE DB FILE.
 
 	return "users deleted, processes stopped."
 
@@ -150,7 +228,7 @@ def genKeypair( testnet ):
 
 #needs testing. i.e. if status.txt doesn't exist, what happens?
 #need to add text saying what's running too
-@app.route()('/get/status')
+@app.route('/get/status')
 def getStatus():
 	with open('status.txt', 'r') as f:
 		ret=f.read()
@@ -172,7 +250,7 @@ def getExplorerURL( isTestnet, pubkey):
 
 def runApp(interval):
 	global process
-	process=subprocess.Popen(["python3", "read.py", str(interval)])
+	process=subprocess.Popen(["python3", "read.py", str(interval)], shell=False)
 
 
 
@@ -187,11 +265,13 @@ if os.path.isfile('mainrunning.txt') is True:
 	with open('mainrunning.txt') as f:
 		interval=f.read()
 	runApp(interval)
+	mainnetAppRunning=True
 elif os.path.isfile('testnetrunning.txt') is True:
 	interval=None
 	with open('testnetrunning.txt') as f:
 		interval=f.read()
 	runApp(interval)
+	testnetAppRunning=True
 
 
 if __name__ == '__main__':
