@@ -1,9 +1,8 @@
 
-from flask import Flask
+from flask import Flask, render_template, request
 
-from flask import render_template
+
 from flask_httpauth import HTTPBasicAuth
-#from flask_restful import Api, Resource
 
 import os
 import os.path
@@ -59,24 +58,48 @@ def index():
 	return 'XLM Environment Monitor api is running. View documentation here; '
 
 #Also needs work.
-@app.route('/register/<username>/<password>')
-def register(username, password):
+@app.route('/register')
+def register():
 	global userRegistered
-	if userRegistered==True:
-		return 'Admin already registered.'
-	else:
-		#users={username:password}
-		pwhash=generate_password_hash(password)
-		vals=[username, pwhash]
+	#if userRegistered==True:
+	#	return 'Admin already registered.'
+	#else:
+	#	#users={username:password}
+	#	pwhash=generate_password_hash(password)
+	#	vals=[username, pwhash]
+	#	userdb=sqlite3.connect("users.db")
+	#	curs=userdb.cursor()
+	#	curs.execute('INSERT INTO users VALUES(NULL, ?, ?)', vals)
+	#	userdb.commit()
+	#	userdb.close()
+
+	#	userRegistered=True
+	#	return 'user registered! welcome ' + username
+
+	return render_template("register.html")
+
+@app.route('/register_submit', methods=['POST'])
+def register_submission():
+	global userRegistered
+	if userRegistered == True:
+		return "err user already registered. Please /reset to register the new admin."
+	add_user_to_db(request.form["username"], request.form["password"])
+	return "Admin: " + request.form["username"] + " registered successfully."
+
+def add_user_to_db(uname, pword):
+	try:
+		resetUserDB()
+		pwhash=generate_password_hash(pword)
+		vals=[uname, pwhash]
 		userdb=sqlite3.connect("users.db")
 		curs=userdb.cursor()
-		curs.execute('INSERT INTO users VALUES(NULL, ?, ?)', vals)
+		curs.execute("INSERT INTO users VALUES(NULL, ?, ?)", vals)
 		userdb.commit()
 		userdb.close()
-
-		userRegistered=True
-		return 'user registered! welcome ' + username
-
+		return True
+	except Exception as e:
+		print(e)
+		return False
 
 @auth.verify_password
 def verify_password(username, password):
@@ -169,8 +192,9 @@ def reset():
 	resetUserDB()
 
 	#THIS DOESN'T WORK. FIGURE OUT WHY.
-	process.terminate()
-	process.wait()
+	if process is not None:
+		process.terminate()
+		process.wait()
 
 	#ALSO NEED TO DELETE/MOVE DB FILE.
 
