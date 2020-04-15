@@ -4,6 +4,7 @@ import time
 import sys
 import getopt
 import json
+import os.path
 
 import sqlite3
 
@@ -15,6 +16,11 @@ keypair = None
 #sets up global variables
 def getKeysSettings():
 	global apiAddr, server, NET_PASS, keypair
+
+	#ensures keys.txt exists before continuing
+	if os.path.isfile('keys.txt') is not True:
+		writeStatus("Keys have not been created.")
+		time.sleep(30)
 
 	#Load keypair and settings from filesystem
 	f=open('keys.txt', 'r')
@@ -39,7 +45,7 @@ def writeStatus(txt):
 	with open('status.txt', 'w') as f:
 		f.write(txt)
 
-
+#Checks if the Stellar account has been created and funded.
 def accReady():
 	res=requests.get(apiAddr+"accounts/"+keypair.public_key)
 	if res.status_code == 200:
@@ -78,14 +84,14 @@ def getNextData():
 			try:
 				c=dbconn.cursor()
 				c.execute('''SELECT min(id), temp, humid, datetime FROM ENV WHERE sent=0''')
-				db_res=c.fetchall()
+				db_res=c.fetchone()
 				print("SQL Queried")
-				if db_res[0][0] is not None:
-					retstr=str(db_res[0][3])
-					retstr+="t:"+str(db_res[0][1])
-					retstr+="h:"+str(db_res[0][2])
+				if db_res[0] is not None:
+					retstr=str(db_res[3])
+					retstr+="t:"+str(db_res[1])
+					retstr+="h:"+str(db_res[2])
 					print("Data exists")
-					retstr=[retstr, db_res[0][0]]
+					retstr=[retstr, db_res[0]]
 					return retstr
 				else:
 					print("up to date")
@@ -93,7 +99,7 @@ def getNextData():
 				print(e)
 			finally:
 				dbconn.close()
-		
+
 		except:
 			print("IO Error")
 		#if error/nothing to send

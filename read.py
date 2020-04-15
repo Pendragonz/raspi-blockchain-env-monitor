@@ -81,6 +81,6 @@ def writeToDB(temp, humid, datetime):
 	except:
 		print("can't write to db")
 		return False
-#start subprocess send.py here
+#start subprocess write.py here
 process=subprocess.Popen(["python3", "write.py"], shell=False)
 mainLoop()
