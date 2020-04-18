@@ -64,10 +64,17 @@ def accReady():
 
 def sendTXN(txn):
 	#CHECK RESPONSE CODE AND HANDLE ACCORDINGLY.
-	response=server.submit_transaction(txn)
-	#if response.status != 200:
+	try:
+		response=server.submit_transaction(txn)
+		print(response)
+		return True
+	except:
+		return False
+
+	#print(response)
+	#if response["status"] != 200:
 	#	return False
-	print(response)
+	#print(response)
 	return True
 
 def getNextData():
@@ -99,6 +106,18 @@ def getNextData():
 		#if error/nothing to send
 		time.sleep(20)
 
+def updateDBRecord(id):
+	try:
+		dbconn=sqlite3.connect("envdata.db")
+		c=dbconn.cursor()
+		c.execute('UPDATE ENV SET sent=1 WHERE ID=?', [int(id)])
+		dbconn.commit()
+		dbconn.close()
+		return True
+	except:
+		print("cant update record, retrying in 5 seconds")
+		return False
+
 def mainLoop():
 	account=server.load_account(keypair.public_key)
 	print("account fetched")
@@ -124,11 +143,8 @@ def mainLoop():
 		while sendTXN(txn) is False:
 			time.sleep(20)
 
-		dbconn=sqlite3.connect("envdata.db")
-		c=dbconn.cursor()
-		c.execute('UPDATE ENV SET sent=1 WHERE ID=?', [int(data[1])])
-		dbconn.commit()
-		dbconn.close()
+		while updateDBRecord(data[1]) is False:
+			time.sleep(5)
 		print("txn sent, db updated")
 
 getKeysSettings()
