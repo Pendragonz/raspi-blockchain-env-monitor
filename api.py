@@ -251,8 +251,14 @@ def ensure_userdb_exists():
 		except:
 			resetUserDB()
 
-if __name__ == '__main__':
-	app.run(port=5000, host='0.0.0.0', debug=True)
+#@app.before_first_request
+def startupcheck():
+	print("running startupcheck")
+	carry_on_where_left_off()
+	ensure_userdb_exists()
 
-carry_on_where_left_off()
-ensure_userdb_exists()
+
+if __name__ == '__main__':
+	startupcheck()
+	app.run(port=5000, host='0.0.0.0', debug=True, use_reloader=False)
+
