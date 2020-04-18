@@ -82,8 +82,30 @@ def verify_password(username, password):
 			return True
 	return False
 
-@app.route('/run/testnet/<int:interval>')
+
+
+@app.route('/run')
+def send_run_app_form():
+	if mainnetAppRunning==True or testnetAppRunning==True:
+		return 'Application already running'
+	else:
+		return render_template("run_form.html")
+
+
+@app.route('/run_submit', methods=['POST'])
 @auth.login_required
+def run_submission():
+	global mainnetAppRunning, testnetAppRunning
+	if mainnetAppRunning == True or testnetAppRunning == True:
+		return "Application already running."
+
+	if request.form["NETWORK"] == "MAINNET":
+		return mainnetService(request.form["INTERVAL"])
+	elif request.form["TESTNET"] == "TESTNET":
+		return testnetService(request.form["INTERVAL"])
+
+#@app.route('/run/testnet/<int:interval>')
+#@auth.login_required
 def testnetService(interval):
 	global testnetAppRunning, mainnetAppRunning, process
 	if testnetAppRunning==True:
@@ -104,20 +126,8 @@ def testnetService(interval):
 		testnetAppRunning=True
 		return 'App running on testnet on ' + "<a href=\""+getExplorerURL(True,keys.public_key)+"\">" + keys.public_key+"</a>"
 
-#Returns the pubkey and network that the app is running on
-@app.route('/get/pubkey')
-def getPubKey():
-	if os.path.isfile('keys.txt') is True:
-		keyFile=open("keys.txt", "r")
-		text = keyFile.read()
-		keyFile.close()
-		processedText=[x.strip() for x in text.split(',')]
-		return processedText[0] + ": " + processedText[1]
-	else:
-		return "Keypair has not yet been created."
-
-@app.route('/run/mainnet/<int:interval>')
-@auth.login_required
+#@app.route('/run/mainnet/<int:interval>')
+#@auth.login_required
 def mainnetService(interval):
 	global testnetAppRunning, mainnetAppRunning,process
 	if testnetAppRunning==True:
@@ -137,7 +147,22 @@ def mainnetService(interval):
 		with open("mainrunning.txt", "w") as f:
 			f.write(str(interval))
 
-		return 'running app on mainnet. Please send XLM to: ' + keys.public_key
+		return 'running app on mainnet. Please send XLM to: ' + keys.public_key + "<a href=\""+getExplorerURL(False ,keys.public_key)+"\">" + keys.public_key+"</a>"
+
+
+
+#Returns the pubkey and network that the app is running on
+@app.route('/get/pubkey')
+def getPubKey():
+	if os.path.isfile('keys.txt') is True:
+		keyFile=open("keys.txt", "r")
+		text = keyFile.read()
+		keyFile.close()
+		processedText=[x.strip() for x in text.split(',')]
+		return processedText[0] + ": " + processedText[1]
+	else:
+		return "Keypair has not yet been created."
+
 
 #delete all files and halt all processes
 @app.route('/reset')
@@ -251,7 +276,6 @@ def ensure_userdb_exists():
 		except:
 			resetUserDB()
 
-#@app.before_first_request
 def startupcheck():
 	print("running startupcheck")
 	carry_on_where_left_off()
@@ -261,4 +285,3 @@ def startupcheck():
 if __name__ == '__main__':
 	startupcheck()
 	app.run(port=5000, host='0.0.0.0', debug=True, use_reloader=False)
-

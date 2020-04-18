@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+    <h1>Run Form</h1>
+    <form action="/run_submit" method="POST">
+      <p>Would you like to run the app on Stellar mainnet or testnet?</p>
+      <input type="radio" value="MAINNET" name="NETWORK" required>
+      <label for="MAINNET">Mainnet</label><br>
+      <input type="radio" value="TESTNET" name="NETWORK">
+      <label for="TESTNET">Testnet</label><br>
+
+      <br>
+
+      <label for="INTERVAL">Recording interval in seconds</label>
+      <input id="INTERVAL" type = "text" name = "INTERVAL" value="15" required>
+      <br>
+
+      <input type="submit" value="Submit"/>
+    </form>
+  </body>
+</html>
