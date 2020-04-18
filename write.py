@@ -8,6 +8,8 @@ import os.path
 
 import sqlite3
 
+print("write.py started")
+
 apiAddr = None
 server = None
 NET_PASS = None
