@@ -1,7 +1,4 @@
-
 from flask import Flask, render_template, request
-
-
 from flask_httpauth import HTTPBasicAuth
 
 import os
@@ -13,15 +10,14 @@ import requests
 import subprocess
 
 import sqlite3
-from werkzeug.security import generate_password_hash
-from werkzeug.security import check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 auth=HTTPBasicAuth()
 
 process=None
-
 userRegistered=False
+KEY_GEN=False
 testnetAppRunning=False
 mainnetAppRunning=False
 
@@ -38,28 +34,10 @@ def resetUserDB():
 	userdb.close()
 	userRegistered=False
 
-if os.path.isfile('users.db') is not True:
-	resetUserDB()
-else:
-	try:
-		userdb=sqlite3.connect("users.db")
-		curs=userdb.cursor()
-		curs.execute('SELECT * FROM users')
-		row=curs.fetchone()
-		if row is not None:
-			userRegistered=True
-		userdb.close()
-	except:
-		resetUserDB()
-
 @app.route('/')
-@app.route('/home')
-@app.route('/index')
 def index():
 	return render_template("index.html")
-	return 'XLM Environment Monitor api is running. View documentation here; '
 
-#Also needs work.
 @app.route('/register')
 def register():
 	global userRegistered
@@ -102,8 +80,7 @@ def verify_password(username, password):
 	if res is not None:
 		if res[1] == username and generate_password_hash( res[2] ):
 			return True
-	else:
-		return False
+	return False
 
 @app.route('/run/testnet/<int:interval>')
 @auth.login_required
@@ -127,18 +104,17 @@ def testnetService(interval):
 		testnetAppRunning=True
 		return 'App running on testnet on ' + "<a href=\""+getExplorerURL(True,keys.public_key)+"\">" + keys.public_key+"</a>"
 
-#Returns the pubkey that the app is running on
+#Returns the pubkey and network that the app is running on
 @app.route('/get/pubkey')
 def getPubKey():
-
-	keyFile=open("keys.txt", "r")
-	text = keyFile.read()
-	keyFile.close()
-
-	processedText=[x.strip() for x in text.split(',')]
-
-	return processedText[0] + ": " + processedText[1]
-
+	if os.path.isfile('keys.txt') is True:
+		keyFile=open("keys.txt", "r")
+		text = keyFile.read()
+		keyFile.close()
+		processedText=[x.strip() for x in text.split(',')]
+		return processedText[0] + ": " + processedText[1]
+	else:
+		return "Keypair has not yet been created."
 
 @app.route('/run/mainnet/<int:interval>')
 @auth.login_required
@@ -163,11 +139,10 @@ def mainnetService(interval):
 
 		return 'running app on mainnet. Please send XLM to: ' + keys.public_key
 
-#delete all files and halt all processes (need to add halt process functionality.)
+#delete all files and halt all processes
 @app.route('/reset')
 @auth.login_required
 def reset():
-
 	global mainnetAppRunning, testnetAppRunning, userRegistered, process
 
 	if mainnetAppRunning is True:
@@ -181,7 +156,6 @@ def reset():
 	userRegistered=False
 	resetUserDB()
 
-	#THIS DOESN'T WORK. FIGURE OUT WHY.
 	if process is not None:
 		process.terminate()
 		process.wait()
@@ -221,8 +195,7 @@ def genKeypair( testnet ):
 @app.route('/get/status')
 def getStatus():
 	with open('status.txt', 'r') as f:
-		ret=f.read()
-	return ret
+		return f.read()
 
 #returns url to stellar expert explorer.
 def getExplorerURL( isTestnet, pubkey):
@@ -234,36 +207,49 @@ def getExplorerURL( isTestnet, pubkey):
 		link+="public/"
 
 	link+="account/" + pubkey
-
-
 	return link
 
 def runApp(interval):
 	global process
 	process=subprocess.Popen(["python3", "read.py", str(interval)], shell=False)
 
+def carry_on_where_left_off():
+	global mainnetAppRunning, testnetAppRunning, KEY_GEN
+	if os.path.isfile('keys.txt') is True:
+		KEY_GEN=True
+	else:
+		KEY_GEN=False
 
+	if os.path.isfile('mainrunning.txt') is True:
+		#read the file and send data to
+		interval=None
+		with open('mainrunning.txt') as f:
+			interval=f.read()
+		runApp(interval)
+		mainnetAppRunning=True
+	elif os.path.isfile('testnetrunning.txt') is True:
+		interval=None
+		with open('testnetrunning.txt') as f:
+			interval=f.read()
+		runApp(interval)
+		testnetAppRunning=True
 
-if os.path.isfile('keys.txt') is True:
-	KEY_GEN=True
-else:
-	KEY_GEN=False
-
-if os.path.isfile('mainrunning.txt') is True:
-	#read the file and send data to
-	interv=None
-	with open('mainrunning.txt') as f:
-		interv=f.read()
-	print("interval" + interv)
-	runApp(interv)
-	mainnetAppRunning=True
-elif os.path.isfile('testnetrunning.txt') is True:
-	interval=None
-	with open('testnetrunning.txt') as f:
-		interv=f.read()
-	runApp(interv)
-	testnetAppRunning=True
-
+def ensure_userdb_exists():
+	if os.path.isfile('users.db') is not True:
+		resetUserDB()
+	else:
+		try:
+			userdb=sqlite3.connect("users.db")
+			curs=userdb.cursor()
+			curs.execute('SELECT * FROM users')
+			row=curs.fetchone()
+			if row is not None:
+				userRegistered=True
+			userdb.close()
+		except:
+			resetUserDB()
 
 if __name__ == '__main__':
+	carry_on_where_left_off()
+	ensure_userdb_exists()
 	app.run(port=5000, host='0.0.0.0', debug=True)
