@@ -252,6 +252,7 @@ def ensure_userdb_exists():
 			resetUserDB()
 
 if __name__ == '__main__':
-	carry_on_where_left_off()
-	ensure_userdb_exists()
 	app.run(port=5000, host='0.0.0.0', debug=True)
+
+carry_on_where_left_off()
+ensure_userdb_exists()
