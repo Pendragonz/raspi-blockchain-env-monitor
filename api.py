@@ -100,9 +100,9 @@ def run_submission():
 		return "Application already running."
 
 	if request.form["NETWORK"] == "MAINNET":
-		return mainnetService(request.form["INTERVAL"])
+		return mainnetService(int(request.form["INTERVAL"]))
 	elif request.form["TESTNET"] == "TESTNET":
-		return testnetService(request.form["INTERVAL"])
+		return testnetService(int(request.form["INTERVAL"]))
 
 #@app.route('/run/testnet/<int:interval>')
 #@auth.login_required
@@ -147,7 +147,7 @@ def mainnetService(interval):
 		with open("mainrunning.txt", "w") as f:
 			f.write(str(interval))
 
-		return 'running app on mainnet. Please send XLM to: ' + keys.public_key + "<a href=\""+getExplorerURL(False ,keys.public_key)+"\">" + keys.public_key+"</a>"
+		return 'running app on mainnet. Please send XLM to: ' + "<a href=\""+getExplorerURL(False ,keys.public_key)+"\">" + keys.public_key+"</a>"
 
 
 
