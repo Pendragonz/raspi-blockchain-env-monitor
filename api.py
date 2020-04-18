@@ -251,16 +251,17 @@ else:
 
 if os.path.isfile('mainrunning.txt') is True:
 	#read the file and send data to
-	interval=None
+	interv=None
 	with open('mainrunning.txt') as f:
-		interval=f.read()
-	runApp(interval)
+		interv=f.read()
+	print("interval" + interv)
+	runApp(interv)
 	mainnetAppRunning=True
 elif os.path.isfile('testnetrunning.txt') is True:
 	interval=None
 	with open('testnetrunning.txt') as f:
-		interval=f.read()
-	runApp(interval)
+		interv=f.read()
+	runApp(interv)
 	testnetAppRunning=True
 
 
