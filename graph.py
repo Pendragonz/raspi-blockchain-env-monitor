@@ -9,8 +9,8 @@ import sys
 #GDJELROP5MRTF5QXPW3AKGJSHQQXKEB5AKHTBBYVGOOSZLHPLH4QRBDU
 url="https://horizon.stellar.org/accounts/" + sys.argv[1] +"/transactions?limit=200"
 
-print("making request")
-res=requests.get("https://horizon.stellar.org/accounts/GDJELROP5MRTF5QXPW3AKGJSHQQXKEB5AKHTBBYVGOOSZLHPLH4QRBDU/transactions?limit=200")
+print("making tx data request")
+res=requests.get(url)
 print("got response")
 res_json=json.loads(res.text)
 
@@ -19,11 +19,16 @@ dates_md=[]#m-d
 times_hms=[]#h:m:s
 temps=[]
 humids=[]
-c=0
+
 for txnrecord in res_json["_embedded"]["records"]:
-    if c!=0:
-        memos.append(txnrecord["memo"])
-    c=c+1
+    if txnrecord["memo_type"]=="text":
+
+        try:
+            memos.append(txnrecord["memo"])
+        except Exception as e:
+            print(e)
+            print(txnrecord)
+
 
 def tx_req():
     global res_json, memos, res
@@ -50,13 +55,9 @@ def tx_req():
     except:
         return False
 
-
-
-    inde=0
     for txn in res_json["_embedded"]["records"]:
-        if inde!=0:
+        if txn["memo_type"]=="text":
             memos.append(txn["memo"])
-        inde=inde+1
     return True
 
 while tx_req() is True:
@@ -84,4 +85,3 @@ df=pd.DataFrame({'datetimes':datetimes, 'temps':temps})
 
 fig = px.line(df, x="datetimes", y="temps")
 fig.show()
-

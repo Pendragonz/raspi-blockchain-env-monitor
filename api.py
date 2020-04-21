@@ -3,6 +3,7 @@ from flask_httpauth import HTTPBasicAuth
 
 import os
 import os.path
+import os.remove
 import signal
 
 from stellar_sdk import Server, Keypair, TransactionBuilder, Network, Account
@@ -11,6 +12,8 @@ import subprocess
 
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
+
+import json
 
 app = Flask(__name__)
 auth=HTTPBasicAuth()
@@ -85,6 +88,7 @@ def verify_password(username, password):
 
 
 @app.route('/run')
+@auth.login_required
 def send_run_app_form():
 	if mainnetAppRunning==True or testnetAppRunning==True:
 		return 'Application already running'
@@ -104,8 +108,7 @@ def run_submission():
 	elif request.form["TESTNET"] == "TESTNET":
 		return testnetService(int(request.form["INTERVAL"]))
 
-#@app.route('/run/testnet/<int:interval>')
-#@auth.login_required
+
 def testnetService(interval):
 	global testnetAppRunning, mainnetAppRunning, process
 	if testnetAppRunning==True:
@@ -126,8 +129,7 @@ def testnetService(interval):
 		testnetAppRunning=True
 		return 'App running on testnet on ' + "<a href=\""+getExplorerURL(True,keys.public_key)+"\">" + keys.public_key+"</a>"
 
-#@app.route('/run/mainnet/<int:interval>')
-#@auth.login_required
+
 def mainnetService(interval):
 	global testnetAppRunning, mainnetAppRunning,process
 	if testnetAppRunning==True:
@@ -167,6 +169,11 @@ def getPubKey():
 #delete all files and halt all processes
 @app.route('/reset')
 @auth.login_required
+def reset_page():
+	return reset()
+
+
+
 def reset():
 	global mainnetAppRunning, testnetAppRunning, userRegistered, process
 
@@ -184,10 +191,60 @@ def reset():
 	if process is not None:
 		process.terminate()
 		process.wait()
-
 	#ALSO NEED TO DELETE/MOVE DB FILE.
-
 	return "users deleted, processes stopped."
+
+@app.route('/refund')
+@auth.login_required
+def refund():
+	if os.path.isfile("keys.txt") is True:
+		return render_template("refund_confirm.html")
+	else:
+		return "keys have not yet been created as the application has not been ran"
+@app.route('/refund_confirm', methods=['POST'])
+@auth.login_required
+def refund_confirm():
+	if request.form["CONFIRM"]=="YES":
+		return issue_refund()
+	elif request.form["CONFIRM"]=="NO":
+		return "XLM withdrawal process cancelled."
+
+def issue_refund():
+
+	#reset()
+	f=open("keys.txt", "r")
+	keytext=f.read()
+	keydata=[x.strip() for x in keytext.split(',')]
+
+	if keydata[0] == "TESTNET":
+		reset()
+		#DELETE KEYS.TXT
+		return "Testnet funds have not been returned. Keys have been deleted"
+
+	keypair=Keypair.from_secret(keydata[2])
+	#get send address from first transaction
+	url="https://horizon.stellar.org/accounts/"+keypair.public_key + "/transactions?limit=1"
+	res=requests.get(url)
+	res_as_json=json.loads(res.text)
+	print(res_as_json)
+	funds_origin=res_as_json["_embedded"]["records"][0]["source_account"]
+	server=Server("https://horizon.stellar.org/")
+	NET_PASS=Network.PUBLIC_NETWORK_PASSPHRASE
+	account=server.load_account(keypair.public_key)
+	txn=TransactionBuilder(
+		source_account=account,
+		network_passphrase=NET_PASS,
+		base_fee=server.fetch_base_fee()
+		).append_account_merge_op(
+			destination=funds_origin
+			).set_timeout(10000).build()
+
+	txn.sign(keypair)
+	reset()
+	resetUserDB()
+	os.remove("keys.txt")
+	server.submit_transaction(txn)
+	return "Account merged with source account."
 
 #testnet must be a boolean value. True for testnet, False for mainnet
 def genKeypair( testnet ):
@@ -208,7 +265,6 @@ def genKeypair( testnet ):
 		f.write(str)
 		f.close()
 		return keypair
-
 	else:
 		with open("keys.txt") as f:
 			keydata=f.read()
