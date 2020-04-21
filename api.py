@@ -3,6 +3,7 @@ from flask_httpauth import HTTPBasicAuth
 
 import os
 import os.path
+import os.remove
 import signal
 
 from stellar_sdk import Server, Keypair, TransactionBuilder, Network, Account
@@ -11,6 +12,8 @@ import subprocess
 
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
+
+import json
 
 app = Flask(__name__)
 auth=HTTPBasicAuth()
@@ -198,7 +201,7 @@ def refund():
 		return render_template("refund_confirm.html")
 	else:
 		return "keys have not yet been created as the application has not been ran"
-@app.route('/refund_confirm')
+@app.route('/refund_confirm', methods=['POST'])
 @auth.login_required
 def refund_confirm():
 	if request.form["CONFIRM"]=="YES":
@@ -208,12 +211,13 @@ def refund_confirm():
 
 def issue_refund():
 
-	reset()
-	with open("keys.txt", "r") as f:
-		keydata=f.read()
-		keydata=[x.strip() for x in keydata.split(',')]
+	#reset()
+	f=open("keys.txt", "r")
+	keytext=f.read()
+	keydata=[x.strip() for x in keytext.split(',')]
 
 	if keydata[0] == "TESTNET":
+		reset()
 		#DELETE KEYS.TXT
 		return "Testnet funds have not been returned. Keys have been deleted"
 
@@ -222,20 +226,25 @@ def issue_refund():
 	url="https://horizon.stellar.org/accounts/"+keypair.public_key + "/transactions?limit=1"
 	res=requests.get(url)
 	res_as_json=json.loads(res.text)
-	funds_origin=res_as_json["_embedded"]["records"]["source_account"]
-	server=Server("https://horizon.stellar.org/accounts/")
+	print(res_as_json)
+	funds_origin=res_as_json["_embedded"]["records"][0]["source_account"]
+	server=Server("https://horizon.stellar.org/")
 	NET_PASS=Network.PUBLIC_NETWORK_PASSPHRASE
 	account=server.load_account(keypair.public_key)
 	txn=TransactionBuilder(
 		source_account=account,
 		network_passphrase=NET_PASS,
 		base_fee=server.fetch_base_fee()
-		).append_account_merge(
+		).append_account_merge_op(
 			destination=funds_origin
 			).set_timeout(10000).build()
 
 	txn.sign(keypair)
-	return server.submit_transaction(txn)
+	reset()
+	resetUserDB()
+	os.remove("keys.txt")
+	server.submit_transaction(txn)
+	return "Account merged with source account."
 
 #testnet must be a boolean value. True for testnet, False for mainnet
 def genKeypair( testnet ):
