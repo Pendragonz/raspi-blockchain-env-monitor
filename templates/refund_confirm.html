@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Confirm Regund</title>
+</head>
+<body>
+  <form action="/refund_confirm" method="POST">
+    <p>Are you sure you want to withdraw all withdrawable XLM?</p><br>
+    <p>This will halt all running processes and reset the stored keys.</p><br>
+    <input type="radio" value="YES" name="CONFIRM" required>
+    <label for="YES">Yes</label><br>
+    <input type="radio" value="NO" name="CONFIRM">
+    <label for="NO">No</label><br>
+
+    <input type="submit" value="submit"/>
+</body>
+
+</html>
