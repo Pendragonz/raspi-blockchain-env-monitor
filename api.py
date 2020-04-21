@@ -3,7 +3,6 @@ from flask_httpauth import HTTPBasicAuth
 
 import os
 import os.path
-import os.remove
 import signal
 
 from stellar_sdk import Server, Keypair, TransactionBuilder, Network, Account
