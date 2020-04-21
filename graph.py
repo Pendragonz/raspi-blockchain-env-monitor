@@ -85,3 +85,6 @@ df=pd.DataFrame({'datetimes':datetimes, 'temps':temps})
 
 fig = px.line(df, x="datetimes", y="temps")
 fig.show()
+df = pd.DataFrame({'datetimes':datetimes, 'humids':humids})
+fig = px.line(df, x="datetimes", y="humids")
+fig.show()
