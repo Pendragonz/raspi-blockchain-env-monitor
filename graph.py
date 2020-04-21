@@ -9,8 +9,8 @@ import sys
 #GDJELROP5MRTF5QXPW3AKGJSHQQXKEB5AKHTBBYVGOOSZLHPLH4QRBDU
 url="https://horizon.stellar.org/accounts/" + sys.argv[1] +"/transactions?limit=200"
 
-print("making request")
-res=requests.get("https://horizon.stellar.org/accounts/GDJELROP5MRTF5QXPW3AKGJSHQQXKEB5AKHTBBYVGOOSZLHPLH4QRBDU/transactions?limit=200")
+print("making tx data request")
+res=requests.get(url)
 print("got response")
 res_json=json.loads(res.text)
 
@@ -84,4 +84,3 @@ df=pd.DataFrame({'datetimes':datetimes, 'temps':temps})
 
 fig = px.line(df, x="datetimes", y="temps")
 fig.show()
-
