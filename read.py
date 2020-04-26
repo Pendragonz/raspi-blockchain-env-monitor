@@ -19,15 +19,34 @@ if len(sys.argv) > 1:
 else:
 	INTERVAL=20
 
+
 #setup DB.
 path="envdata.db"
-if os.path.isfile(path) is not True:
+
+def resetenvdb():
+	global path
 	dbconn=sqlite3.connect(path)
 	c = dbconn.cursor()
 	c.execute('''CREATE TABLE ENV (id INTEGER PRIMARY KEY, temp FLOAT, humid FLOAT, datetime TEXT, sent INTEGER)''')
 	dbconn.commit()
 	dbconn.close()
 	print("table created")
+
+
+if os.path.isfile(path) is not True:
+	resetenvdb()
+else:
+	try:
+		dbconn=sqlite3.connect(path)
+		c=dbconn.cursor()
+		c.execute('''SELECT * FROM ENV;''')
+		dbconn.close()
+	except Exception as e:
+		print(e)
+		resetenvdb()
+	finally:
+		dbconn.close()
+
 
 def mainLoop():
 
