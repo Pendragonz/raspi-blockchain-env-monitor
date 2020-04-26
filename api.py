@@ -19,7 +19,8 @@ app = Flask(__name__)
 auth=HTTPBasicAuth()
 
 #placeholder to hold read.py subprocess
-process=None
+readprocess=None
+writeprocess=None
 #if True, no more users can be registered
 userRegistered=False
 #defaults to false, assuming a keys.txt file is already generated. Used to control whether to generate new keys or not.
@@ -182,7 +183,7 @@ def reset_page():
 
 
 def reset():
-	global mainnetAppRunning, testnetAppRunning, userRegistered, process
+	global mainnetAppRunning, testnetAppRunning, userRegistered, readprocess, writeprocess
 
 	if mainnetAppRunning is True:
 		os.remove('mainrunning.txt')
@@ -195,9 +196,13 @@ def reset():
 	userRegistered=False
 	resetUserDB()
 
-	if process is not None:
-		process.terminate()
-		process.wait()
+	if readprocess is not None:
+		readprocess.terminate()
+		readprocess.wait()
+
+	if writeprocess is not None:
+		writeprocess.terminate()
+		writeprocess.wait()
 
 	backupfile("envdata.db")
 
@@ -305,8 +310,10 @@ def getExplorerURL( isTestnet, pubkey):
 #starts subprocess read.py and passes interval. Interval is the period of which 
 #readings will be averaged.
 def runApp(interval):
-	global process
-	process=subprocess.Popen(["python3", "read.py", str(interval)], shell=False)
+	global readprocess, writeprocess
+	readprocess=subprocess.Popen(["python3", "read.py", str(interval)], shell=False)
+	time.sleep(10)
+	writeprocess=subprocess.Popen(["python3", "write.py"], shell=False)
 
 #sets global variables to the correct values based on file prescence
 def carry_on_where_left_off():
