@@ -17,12 +17,17 @@ import json
 app = Flask(__name__)
 auth=HTTPBasicAuth()
 
+#placeholder to hold read.py subprocess
 process=None
+#if True, no more users can be registered
 userRegistered=False
+#defaults to false, assuming a keys.txt file is already generated. Used to control whether to generate new keys or not.
 KEY_GEN=False
+#variables to track app run status. Only one should be True.
 testnetAppRunning=False
 mainnetAppRunning=False
 
+#refreshes users.db; regenerates users table.
 def resetUserDB():
 	global userRegistered
 	userdb=sqlite3.connect("users.db")
@@ -172,7 +177,6 @@ def reset_page():
 	return reset()
 
 
-
 def reset():
 	global mainnetAppRunning, testnetAppRunning, userRegistered, process
 
@@ -190,7 +194,9 @@ def reset():
 	if process is not None:
 		process.terminate()
 		process.wait()
-	#ALSO NEED TO DELETE/MOVE DB FILE.
+
+	backupfile("envdata.db")
+
 	return "users deleted, processes stopped."
 
 @app.route('/refund')
@@ -210,7 +216,8 @@ def refund_confirm():
 
 def issue_refund():
 
-	#reset()
+	global KEY_GEN
+
 	f=open("keys.txt", "r")
 	keytext=f.read()
 	keydata=[x.strip() for x in keytext.split(',')]
@@ -241,8 +248,10 @@ def issue_refund():
 	txn.sign(keypair)
 	reset()
 	resetUserDB()
-	os.remove("keys.txt")
+	#os.remove("keys.txt")
 	server.submit_transaction(txn)
+	backupfile("keys.txt")
+	KEY_GEN=True
 	return "Account merged with source account."
 
 #testnet must be a boolean value. True for testnet, False for mainnet
@@ -336,6 +345,15 @@ def startupcheck():
 	carry_on_where_left_off()
 	ensure_userdb_exists()
 
+#moves file fname to backups/ and renames to include a timestamp
+def backupfile(fname):
+	fname=str(fname)
+	if os.path.isfile(fname) is False:
+		return
+	if os.path.isdir("backups") is False:
+		os.makedirs("backups")
+	dest="backups/"+ time.ctime(time.time()+fname)
+	os.rename(fname, dest)
 
 if __name__ == '__main__':
 	startupcheck()
