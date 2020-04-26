@@ -312,9 +312,9 @@ def getExplorerURL( isTestnet, pubkey):
 #readings will be averaged.
 def runApp(interval):
 	global readprocess, writeprocess
-	readprocess=subprocess.Popen(["python3", "/home/pi/api/raspi-blockchain-env-monitor/read.py", str(interval)], shell=False)
+	readprocess=subprocess.Popen(["python3", "read.py", str(interval)], shell=False)
 	time.sleep(10)
-	writeprocess=subprocess.Popen(["python3", "/home/pi/api/raspi-blockchain-env-monitor/write.py"], shell=False)
+	writeprocess=subprocess.Popen(["python3", "write.py"], shell=False)
 
 #sets global variables to the correct values based on file prescence
 def carry_on_where_left_off():
