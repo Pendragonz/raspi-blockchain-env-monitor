@@ -13,6 +13,7 @@ import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import json
+import time
 
 app = Flask(__name__)
 auth=HTTPBasicAuth()
@@ -61,7 +62,9 @@ def register_submission():
 	add_user_to_db(request.form["username"], request.form["password"])
 	return "Admin: " + request.form["username"] + " registered successfully."
 
+#adds user to DB, only gets called if userRegistered is False
 def add_user_to_db(uname, pword):
+	global userRegistered
 	try:
 		resetUserDB()
 		pwhash=generate_password_hash(pword)
@@ -71,6 +74,7 @@ def add_user_to_db(uname, pword):
 		curs.execute("INSERT INTO users VALUES(NULL, ?, ?)", vals)
 		userdb.commit()
 		userdb.close()
+		userRegistered=True
 		return True
 	except Exception as e:
 		print(e)
@@ -109,7 +113,7 @@ def run_submission():
 
 	if request.form["NETWORK"] == "MAINNET":
 		return mainnetService(int(request.form["INTERVAL"]))
-	elif request.form["TESTNET"] == "TESTNET":
+	elif request.form["NETWORK"] == "TESTNET":
 		return testnetService(int(request.form["INTERVAL"]))
 
 
@@ -170,7 +174,7 @@ def getPubKey():
 		return "Keypair has not yet been created."
 
 
-#delete all files and halt all processes
+#delete all db records and halt all processes
 @app.route('/reset')
 @auth.login_required
 def reset_page():
@@ -206,6 +210,7 @@ def refund():
 		return render_template("refund_confirm.html")
 	else:
 		return "keys have not yet been created as the application has not been ran"
+
 @app.route('/refund_confirm', methods=['POST'])
 @auth.login_required
 def refund_confirm():
@@ -214,6 +219,7 @@ def refund_confirm():
 	elif request.form["CONFIRM"]=="NO":
 		return "XLM withdrawal process cancelled."
 
+#returns funds to issuer, backs-up keys.txt, 
 def issue_refund():
 
 	global KEY_GEN
@@ -224,7 +230,7 @@ def issue_refund():
 
 	if keydata[0] == "TESTNET":
 		reset()
-		#DELETE KEYS.TXT
+		backupfile("keys.txt")
 		return "Testnet funds have not been returned. Keys have been deleted"
 
 	keypair=Keypair.from_secret(keydata[2])
@@ -247,8 +253,6 @@ def issue_refund():
 
 	txn.sign(keypair)
 	reset()
-	resetUserDB()
-	#os.remove("keys.txt")
 	server.submit_transaction(txn)
 	backupfile("keys.txt")
 	KEY_GEN=True
@@ -298,10 +302,13 @@ def getExplorerURL( isTestnet, pubkey):
 	link+="account/" + pubkey
 	return link
 
+#starts subprocess read.py and passes interval. Interval is the period of which 
+#readings will be averaged.
 def runApp(interval):
 	global process
 	process=subprocess.Popen(["python3", "read.py", str(interval)], shell=False)
 
+#sets global variables to the correct values based on file prescence
 def carry_on_where_left_off():
 	global mainnetAppRunning, testnetAppRunning, KEY_GEN
 	if os.path.isfile('keys.txt') is True:
@@ -325,6 +332,7 @@ def carry_on_where_left_off():
 		runApp(interval)
 		testnetAppRunning=True
 
+#checks if users.db exists. If it doesnt, creates it using resetUserDB.
 def ensure_userdb_exists():
 	if os.path.isfile('users.db') is not True:
 		resetUserDB()
@@ -340,6 +348,7 @@ def ensure_userdb_exists():
 		except:
 			resetUserDB()
 
+#checks previous run status and ensures userDB exists.
 def startupcheck():
 	print("running startupcheck")
 	carry_on_where_left_off()
@@ -352,7 +361,7 @@ def backupfile(fname):
 		return
 	if os.path.isdir("backups") is False:
 		os.makedirs("backups")
-	dest="backups/"+ time.ctime(time.time()+fname)
+	dest="backups/"+ time.ctime(time.time())+fname
 	os.rename(fname, dest)
 
 if __name__ == '__main__':
