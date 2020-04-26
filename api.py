@@ -224,7 +224,7 @@ def refund_confirm():
 	elif request.form["CONFIRM"]=="NO":
 		return "XLM withdrawal process cancelled."
 
-#returns funds to issuer, backs-up keys.txt, 
+#returns funds to issuer, backs-up keys.txt,
 def issue_refund():
 
 	global KEY_GEN
@@ -265,8 +265,8 @@ def issue_refund():
 
 #testnet must be a boolean value. True for testnet, False for mainnet
 def genKeypair( testnet ):
-
-	if KEY_GEN is not True:
+	global KEY_GEN
+	if KEY_GEN is True:
 		keypair = Keypair.random()
 
 		if testnet is True:
@@ -281,6 +281,7 @@ def genKeypair( testnet ):
 		f=open("keys.txt", "w")
 		f.write(str)
 		f.close()
+		KEY_GEN=False
 		return keypair
 	else:
 		with open("keys.txt") as f:
@@ -307,7 +308,7 @@ def getExplorerURL( isTestnet, pubkey):
 	link+="account/" + pubkey
 	return link
 
-#starts subprocess read.py and passes interval. Interval is the period of which 
+#starts subprocess read.py and passes interval. Interval is the period of which
 #readings will be averaged.
 def runApp(interval):
 	global readprocess, writeprocess
@@ -319,9 +320,9 @@ def runApp(interval):
 def carry_on_where_left_off():
 	global mainnetAppRunning, testnetAppRunning, KEY_GEN
 	if os.path.isfile('keys.txt') is True:
-		KEY_GEN=True
-	else:
 		KEY_GEN=False
+	else:
+		KEY_GEN=True
 
 	if os.path.isfile('mainrunning.txt') is True:
 		#read the file and send data to
