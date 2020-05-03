@@ -27,6 +27,9 @@ python3 api.py
 This will start the flask application on port 5000 on localhost. You can interact with it within your local network at 192.168.1.X:5000.
 To find X, check your RaspberryPi's IP from within your router (192.168.1.1). To access it outside of your network, you'll need to setup port forwarding rules.
 
+Keep in mind that the monitoring application api.py will carry on where it left off. If it was running on Stellar's mainnet it will resume once started. If it was running on Stellar's testnet it will do the same.
+In order to stop the program properly use /refund.
+
 ### 192.168.1.X:5000/
 This is the Flask app's homepage. It will display a link to the documentation here.
 
@@ -61,4 +64,31 @@ Stops any currently running services and deletes the registered user.
 ### 192.168.1.X:5000/refund
 If the application is running on Stellar's mainnet, it will refund any unused XLM back to the sender.
 
-It then backs up the reading's database and Stellar wallet's keys to backups/ within the cloned directory.
+It then performs the same tasks that /reset does and it then backs up the reading's database and Stellar wallet's keys to backups/ within the cloned directory.
+
+
+## Running API.py on startup
+In order to run the monitoring application on startup of your Pi use crontab.
+
+Edit your crontab file:
+
+sudo crontab -e
+
+On the bottom line of the file, add the following:
+
+@reboot cd /path/to/the/repo && python3 api.py &
+
+## Visualising the readings from Stellar's blockchain
+
+### Prerequisites
+#### Python3
+#### Plotly
+pip install plotly
+#### pandas
+pip install pandas
+
+### graph.py
+Simply run graph.py and pass it your Stellar address (testnet not yet supported).
+E.G. python3 graphy.py GAZCFTIKK2MRFEF4APXO6OTQK4T5PIWQSHO3THENUIERHN7UB2XCOFA2
+
+This will open up 2 charts in your default web browser. One showing temperature against date&time, one showing humidity against date&time.
