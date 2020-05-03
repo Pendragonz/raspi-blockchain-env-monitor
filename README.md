@@ -11,17 +11,19 @@ Use this repo on your RaspberryPi alongside a DHT22 sensor attached to GPIO pin 
 ### pip
 ### Adafruit_DHT
 sudo pip install Adafruit_DHT
-### stellar_dsk
+### stellar_sdk
 pip install stellar_sdk==2.3.1
 ### Flask and Flask-HTTPAuth
 pip install flask
+
 pip install Flask-HTTPAuth
 ### SQLite3
 sudo apt-get install sqlite3
 
 
 ## Running the monitoring service
-To run the monitor, call
+To run the monitor, call:
+
 python3 api.py
 
 This will start the flask application on port 5000 on localhost. You can interact with it within your local network at 192.168.1.X:5000.
@@ -89,6 +91,7 @@ pip install pandas
 
 ### graph.py
 Simply run graph.py and pass it your Stellar address (testnet not yet supported).
+
 E.G. python3 graphy.py GAZCFTIKK2MRFEF4APXO6OTQK4T5PIWQSHO3THENUIERHN7UB2XCOFA2
 
 This will open up 2 charts in your default web browser. One showing temperature against date&time, one showing humidity against date&time.
