@@ -24,9 +24,9 @@ class TestHome(unittest.TestCase):
 	def setUp(self):
 		self.cleanTheSlate()
 		self.url="http://0.0.0.0:5050"
-		#self.HIDE=open(os.devnull, "w")
+		self.HIDE=open(os.devnull, "w")
 		#self.api=subprocess.Popen(["flask", "run", "--host", "0.0.0.0", "--port", "5050", "--no-reload"]) #, stdout=self.HIDE#)
-		self.api=subprocess.Popen(["python3", "api.py", "5050", "&"], shell=False)
+		self.api=subprocess.Popen(["python3", "api.py", "5050", "&"], shell=False, stdout=self.HIDE)
 		#print("SUBPROCESS STARTED =====================")
 		time.sleep(3)
 
@@ -36,7 +36,7 @@ class TestHome(unittest.TestCase):
 		time.sleep(1)
 		#print("SUBPROCESS TERMINATED ===============")
 		self.cleanTheSlate()
-		#self.HIDE.close()
+		self.HIDE.close()
 
 	#deletes all api.py artifacts.
 	def cleanTheSlate(self):
@@ -72,8 +72,6 @@ class TestHome(unittest.TestCase):
 
 
 	def test_home(self):
-		print("TEST_HOME CALLED=====================")
-		#print("url: " + url)
 		self.assertEqual(requests.get(url+"/").status_code, 200)
 
 	def test_register(self):
@@ -81,13 +79,13 @@ class TestHome(unittest.TestCase):
 		pword="password"
 
 		self.register(uname, pword)
-		time.sleep(2)
+		time.sleep(1)
 		self.assertTrue(self.check_uname_in_db(uname))
 	
 	def register(self, uname, pword):
 		data={'username': str(uname), 'password':str(pword)}
 		reg_url=url+"/register_submit"
-		print(requests.post(reg_url, data=data).text)
+		requests.post(reg_url, data=data)
 		
 
 	def check_uname_in_db(self, username):
@@ -107,12 +105,12 @@ class TestHome(unittest.TestCase):
 		run_url=url+"/run_submit"
 		data={'NETWORK': 'TESTNET', 'INTERVAL': '2'}
 		res=requests.post(run_url, data=data, auth=(uname, pword))
-		print(res.text)
+		#print(res.text)
 		self.assertEqual(res.status_code, 200)
 		
 		time.sleep(10)
 		num_entries = self.get_num_env_entries()
-		print(str(num_entries))
+		#print(str(num_entries))
 		self.assertTrue(int(num_entries) > 3)
 		requests.get(url+"/reset", auth=(uname,pword))
 
