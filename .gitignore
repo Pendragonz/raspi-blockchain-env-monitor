@@ -3,10 +3,10 @@ backups/
 *.out
 *.txt
 *.db
-tests/api.py
-tests/write.py
-tests/read.py
-tests/backups
-tests/templates
-tests/cpTest.py
+test/api.py
+test/write.py
+test/read.py
+test/backups
+test/templates
+test/cpTest.py
 
