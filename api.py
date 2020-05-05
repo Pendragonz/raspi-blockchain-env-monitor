@@ -4,6 +4,7 @@ from flask_httpauth import HTTPBasicAuth
 import os
 import os.path
 import signal
+import sys
 
 from stellar_sdk import Server, Keypair, TransactionBuilder, Network, Account
 import requests
@@ -60,6 +61,9 @@ def register_submission():
 	global userRegistered
 	if userRegistered == True:
 		return "err user already registered. Please /reset to register the new admin."
+	
+	print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+	print(request.form)
 	add_user_to_db(request.form["username"], request.form["password"])
 	return "Admin: " + request.form["username"] + " registered successfully."
 
@@ -374,4 +378,7 @@ def backupfile(fname):
 
 if __name__ == '__main__':
 	startupcheck()
-	app.run(port=5000, host='0.0.0.0', debug=True, use_reloader=False)
+	prt=5000
+	if len(sys.argv)>= 2:
+		prt=sys.argv[1]
+	app.run(port=prt, host='0.0.0.0', debug=True, use_reloader=False)
