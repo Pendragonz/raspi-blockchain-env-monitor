@@ -3,15 +3,14 @@ import unittest
 import subprocess
 import time
 import os
-
 import sqlite3
+
+import get_num_operations
 
 from shutil import copyfile, copytree
 
 #api=None
 #startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-
-
 
 
 url="http://0.0.0.0:5050"
@@ -110,9 +109,26 @@ class TestHome(unittest.TestCase):
 		
 		time.sleep(10)
 		num_entries = self.get_num_env_entries()
-		#print(str(num_entries))
+		print("DB ENTRIES-------------------------------------------"+str(num_entries))
 		self.assertTrue(int(num_entries) > 3)
+
+		pubkey=self.get_pubkey_from_file()
+		print("PUBKEY----------------------------------------------------"+pubkey)
+		if pubkey is not None:
+			num_operations=get_num_operations.main("https://horizon-testnet.stellar.org", pubkey)
+			print("NUM OPERATIONS---------" + str(num_operations))
+			self.assertTrue(num_operations > 1)
+		
 		requests.get(url+"/reset", auth=(uname,pword))
+
+
+	def get_pubkey_from_file(self):
+		if os.path.isfile("keys.txt") is True:
+			with open("keys.txt", "r") as f:
+				keys=[x.strip() for x in f.read().split(",")]
+				return keys[1]
+		else:
+			return None
 
 
 	def get_num_env_entries(self):
