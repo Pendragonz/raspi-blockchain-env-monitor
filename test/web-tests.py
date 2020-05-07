@@ -9,8 +9,7 @@ import get_num_operations
 
 from shutil import copyfile, copytree
 
-#api=None
-#startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+from stellar_sdk import Server, Keypair, TransactionBuilder, Network, Account
 
 
 url="http://0.0.0.0:5050"
@@ -109,14 +108,14 @@ class TestHome(unittest.TestCase):
 		
 		time.sleep(10)
 		num_entries = self.get_num_env_entries()
-		print("DB ENTRIES-------------------------------------------"+str(num_entries))
+		#print("DB ENTRIES-------------------------------------------"+str(num_entries))
 		self.assertTrue(int(num_entries) > 3)
 
 		pubkey=self.get_pubkey_from_file()
-		print("PUBKEY----------------------------------------------------"+pubkey)
+		#print("PUBKEY----------------------------------------------------"+pubkey)
 		if pubkey is not None:
 			num_operations=get_num_operations.main("https://horizon-testnet.stellar.org", pubkey)
-			print("NUM OPERATIONS---------" + str(num_operations))
+			#print("NUM OPERATIONS---------" + str(num_operations))
 			self.assertTrue(num_operations > 1)
 		
 		requests.get(url+"/reset", auth=(uname,pword))
@@ -131,6 +130,13 @@ class TestHome(unittest.TestCase):
 			return None
 
 
+	def get_keypair_from_file(self, fname):
+		with open(fname, "r") as f:
+			keyinfo=[x.strip() for x in f.read().split(",")]
+			keys = Keypair.from_secret(keyinfo[2])
+		return keys
+
+
 	def get_num_env_entries(self):
 		envdata=sqlite3.connect('envdata.db')
 		c=envdata.cursor()
@@ -140,8 +146,35 @@ class TestHome(unittest.TestCase):
 		return res[0]
 
 
-#	def test_run_mainnet(self):
-#		pass
+	def test_run_mainnet(self):
+		uname="daniel"
+		pword="password"
+		self.register(uname, pword)
+		dta={'NETWORK': 'MAINNET', 'INTERVAL': '2'}
+		requests.post(url+"/run_submit", data=dta, auth=(uname,pword))
+		time.sleep(2)
+		test_keys=self.get_keypair_from_file('testing_keys.txt')
+		serv_keys=self.get_keypair_from_file('keys.txt')
+		self.send_txn(test_keys.secret, serv_keys.public_key, None)
+		time.sleep(30)
+		
+		self.assertTrue(self.get_num_env_entries() > 3)
+
+
+		#stop server before testing and refunding acc to give horizon time. 
+		#horizon returns false sequence numbers during high load
+		requests.get(url+'/reset', auth=(uname, pword))
+
+		time.sleep(5)
+
+		num_operations=get_num_operations.main("https://horizon.stellar.org", serv_keys.public_key)
+		
+		#print("NUM STELLAR TXNS"+str(num_operations))
+		self.assertTrue(num_operations>1)
+
+		#refund src account
+		self.send_txn(serv_keys.secret, test_keys.public_key, True)
+	
 
 #	def test_reset(self):
 #		pass
@@ -149,8 +182,53 @@ class TestHome(unittest.TestCase):
 #	def test_refund(self):
 #		pass
 
-#	def test_get_pubkey(self):
-#		pass
+	#origin= source private key, dest = destination stellar pubkey
+	#merge boolean. if True, source acc merges with destination
+	def send_txn(self, origin, dest, merge):
+		keys=Keypair.from_secret(origin)
+		server=Server("https://horizon.stellar.org/")
+		NET_PASS=Network.PUBLIC_NETWORK_PASSPHRASE
+		basefee=server.fetch_base_fee()
+		account=server.load_account(keys.public_key)
+		#print("DESTINATION:-----------------------------------:" + dest)
+		if merge !=  None and merge == True:
+			txn=TransactionBuilder(
+				source_account=account,
+				network_passphrase=NET_PASS,
+				base_fee=basefee,
+					).append_account_merge_op(
+					destination=dest
+					).set_timeout(10000).build()
+		else:
+			#print("POPULATING ACCOUNT: "+dest+ "from: " + keys.public_key)
+			txn=TransactionBuilder(
+				source_account=account,
+				network_passphrase=NET_PASS,
+				base_fee=basefee,
+				).append_create_account_op(
+					destination=dest,
+					starting_balance="1.51").set_timeout(1000).build()
+		txn.sign(keys)
+		server.submit_transaction(txn)
+	
+
+	def test_get_pubkey(self):
+		uname="daniel"
+		pword="password"
+		self.register(uname, pword)
+		data={'NETWORK': 'TESTNET', 'INTERVAL': '2'}
+		requests.post(url+"/run_submit", data=data, auth=(uname,pword))
+		res=requests.get(url+"/get/pubkey")
+		
+		proc_res=res.text.split(": ")
+		self.assertEqual(proc_res[0], "TESTNET")
+
+		pubkey=self.get_pubkey_from_file()
+
+		self.assertEqual(proc_res[1], pubkey)
+		
+		requests.get(url+'/reset', auth=(uname, pword))
+
 
 copyfile('../api.py', 'api.py')
 copyfile('../read.py', 'read.py')
