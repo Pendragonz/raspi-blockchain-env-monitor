@@ -9,4 +9,5 @@ test/read.py
 test/backups
 test/templates
 test/cpTest.py
-
+test/temp.py
+test/__pycache__/
