@@ -61,7 +61,7 @@ def register_submission():
 	global userRegistered
 	if userRegistered == True:
 		return "err user already registered. Please /reset to register the new admin."
-	
+
 	print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 	print(request.form)
 	add_user_to_db(request.form["username"], request.form["password"])
@@ -230,12 +230,11 @@ def refund_confirm():
 
 #returns funds to issuer, backs-up keys.txt,
 def issue_refund():
-
 	global KEY_GEN
 
-	f=open("keys.txt", "r")
-	keytext=f.read()
-	keydata=[x.strip() for x in keytext.split(',')]
+	with open("keys.txt", "r") as f:
+		keytext=f.read()
+		keydata=[x.strip() for x in keytext.split(',')]
 
 	if keydata[0] == "TESTNET":
 		reset()
