@@ -240,25 +240,32 @@ class TestHome(unittest.TestCase):
 		server=Server("https://horizon.stellar.org/")
 		NET_PASS=Network.PUBLIC_NETWORK_PASSPHRASE
 		basefee=server.fetch_base_fee()
-		account=server.load_account(keys.public_key)
-		if merge !=  None and merge == True:
-			txn=TransactionBuilder(
-				source_account=account,
-				network_passphrase=NET_PASS,
-				base_fee=basefee,
-					).append_account_merge_op(
-					destination=dest
-					).set_timeout(10000).build()
-		else:
-			txn=TransactionBuilder(
-				source_account=account,
-				network_passphrase=NET_PASS,
-				base_fee=basefee,
-				).append_create_account_op(
-					destination=dest,
-					starting_balance="1.51").set_timeout(1000).build()
-		txn.sign(keys)
-		server.submit_transaction(txn)
+
+		txnSent=False
+		while txnSent is False:
+			try:
+				account=server.load_account(keys.public_key)
+				if merge !=  None and merge == True:
+					txn=TransactionBuilder(
+						source_account=account,
+						network_passphrase=NET_PASS,
+						base_fee=basefee,
+							).append_account_merge_op(
+							destination=dest
+							).set_timeout(10000).build()
+				else:
+					txn=TransactionBuilder(
+						source_account=account,
+						network_passphrase=NET_PASS,
+						base_fee=basefee,
+						).append_create_account_op(
+							destination=dest,
+							starting_balance="1.51").set_timeout(1000).build()
+				txn.sign(keys)
+				server.submit_transaction(txn)
+				txnSent=True
+			except:
+				time.sleep(0.5)
 
 
 	def test_get_pubkey(self):
