@@ -176,8 +176,27 @@ class TestHome(unittest.TestCase):
 		self.send_txn(serv_keys.secret, test_keys.public_key, True)
 	
 
-#	def test_reset(self):
-#		pass
+	def test_reset(self):
+		uname="daniel"
+		pword="password"
+		self.register(uname, pword)
+		dta={'NETWORK':'TESTNET','INTERVAL':'2'}
+		requests.post(url+'/run_submit', data=dta, auth=(uname,pword))
+		time.sleep(20)
+		entries=self.get_num_env_entries()
+		self.assertTrue(entries>=3)
+		requests.get(url+'/reset', auth=(uname,pword))
+
+		time.sleep(2)
+		userdb=sqlite3.connect("users.db")
+		curs=userdb.cursor()
+		curs.execute('SELECT Count(*) FROM users')
+		numUsers=curs.fetchone()
+		userdb.close()
+		print("number of users::::::::::::" + str(numUsers[0]))
+		self.assertEqual(numUsers[0], 0)
+		
+
 
 #	def test_refund(self):
 #		pass
