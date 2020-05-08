@@ -213,7 +213,7 @@ class TestHome(unittest.TestCase):
 		#start app on mainnet with interval 3
 		dta={'NETWORK':'MAINNET','INTERVAL':'3'}
 		requests.post(url+'/run_submit', data=dta, auth=(uname,pword))
-		time.sleep(20)
+		time.sleep(30)
 
 		test_keypair=self.get_keypair_from_file('testing_keys.txt')
 		serv_keypair=self.get_keypair_from_file('keys.txt')
