@@ -10,14 +10,14 @@ import sqlite3
 
 print("write.py started")
 
-apiAddr = None
+horizon = None
 server = None
 NET_PASS = None
 keypair = None
 
 #sets up global variables
 def getKeysSettings():
-	global apiAddr, server, NET_PASS, keypair
+	global horizon, server, NET_PASS, keypair
 
 	#ensures keys.txt exists before continuing
 	if os.path.isfile('keys.txt') is not True:
@@ -33,12 +33,12 @@ def getKeysSettings():
 	listKeyData=[x.strip() for x in keyData.split(',')]
 
 	if listKeyData[0] == "MAINNET":
-		apiAddr="https://horizon.stellar.org/"
-		server=Server(apiAddr)
+		horizon="https://horizon.stellar.org/"
+		server=Server(horizon)
 		NET_PASS=Network.PUBLIC_NETWORK_PASSPHRASE
 	else:
-		apiAddr="https://horizon-testnet.stellar.org/"
-		server=Server(apiAddr)
+		horizon="https://horizon-testnet.stellar.org/"
+		server=Server(horizon)
 		NET_PASS=Network.TESTNET_NETWORK_PASSPHRASE
 
 	keypair=Keypair.from_secret(listKeyData[2])
@@ -49,7 +49,7 @@ def writeStatus(txt):
 
 #Checks if the Stellar account has been created and funded.
 def accReady():
-	res=requests.get(apiAddr+"accounts/"+keypair.public_key)
+	res=requests.get(horizon+"accounts/"+keypair.public_key)
 	if res.status_code == 200:
 		try:
 			res_as_json=json.loads(res.text)
