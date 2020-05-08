@@ -4,6 +4,7 @@ from flask_httpauth import HTTPBasicAuth
 import os
 import os.path
 import signal
+import sys
 
 from stellar_sdk import Server, Keypair, TransactionBuilder, Network, Account
 import requests
@@ -18,14 +19,13 @@ import time
 app = Flask(__name__)
 auth=HTTPBasicAuth()
 
-#placeholder to hold read.py subprocess
+
+#initialise all variables to defaults and placeholder values
+
 readprocess=None
 writeprocess=None
-#if True, no more users can be registered
 userRegistered=False
-#defaults to false, assuming a keys.txt file is already generated. Used to control whether to generate new keys or not.
 KEY_GEN=False
-#variables to track app run status. Only one should be True.
 testnetAppRunning=False
 mainnetAppRunning=False
 
@@ -43,6 +43,7 @@ def resetUserDB():
 	userdb.close()
 	userRegistered=False
 
+#home page
 @app.route('/')
 def index():
 	return render_template("index.html")
@@ -55,11 +56,13 @@ def register():
 	else:
 		return render_template("register.html")
 
+#1 user policy enforced
 @app.route('/register_submit', methods=['POST'])
 def register_submission():
 	global userRegistered
 	if userRegistered == True:
 		return "err user already registered. Please /reset to register the new admin."
+
 	add_user_to_db(request.form["username"], request.form["password"])
 	return "Admin: " + request.form["username"] + " registered successfully."
 
@@ -93,7 +96,6 @@ def verify_password(username, password):
 		if res[1] == username and generate_password_hash( res[2] ):
 			return True
 	return False
-
 
 
 @app.route('/run')
@@ -183,7 +185,7 @@ def reset_page():
 
 
 def reset():
-	global mainnetAppRunning, testnetAppRunning, userRegistered, readprocess, writeprocess
+	global mainnetAppRunning, testnetAppRunning, userRegistered
 
 	if mainnetAppRunning is True:
 		os.remove('mainrunning.txt')
@@ -194,15 +196,9 @@ def reset():
 		testnetAppRunning=False
 
 	userRegistered=False
+
 	resetUserDB()
-
-	if readprocess is not None:
-		readprocess.terminate()
-		readprocess.wait()
-
-	if writeprocess is not None:
-		writeprocess.terminate()
-		writeprocess.wait()
+	stop_processes()
 
 	backupfile("envdata.db")
 
@@ -226,12 +222,11 @@ def refund_confirm():
 
 #returns funds to issuer, backs-up keys.txt,
 def issue_refund():
-
 	global KEY_GEN
 
-	f=open("keys.txt", "r")
-	keytext=f.read()
-	keydata=[x.strip() for x in keytext.split(',')]
+	with open("keys.txt", "r") as f:
+		keytext=f.read()
+		keydata=[x.strip() for x in keytext.split(',')]
 
 	if keydata[0] == "TESTNET":
 		reset()
@@ -239,15 +234,36 @@ def issue_refund():
 		return "Testnet funds have not been returned. Keys have been deleted"
 
 	keypair=Keypair.from_secret(keydata[2])
-	#get send address from first transaction
-	url="https://horizon.stellar.org/accounts/"+keypair.public_key + "/transactions?limit=1"
+	stop_processes()
+
+	while submit_merge_txn(keypair) is False:
+		time.sleep(1)
+	reset()
+
+	backupfile("keys.txt")
+	KEY_GEN=True
+	return "Account merged with source account."
+
+def stop_processes():
+	global readprocess, writeprocess
+	if readprocess is not None:
+		readprocess.terminate()
+		readprocess.wait()
+		readprocess=None
+	if writeprocess is not None:
+		writeprocess.terminate()
+		writeprocess.wait()
+		writeprocess=None
+
+def submit_merge_txn(keys):
+	url="https://horizon.stellar.org/accounts/"+keys.public_key + "/transactions?limit=1"
 	res=requests.get(url)
 	res_as_json=json.loads(res.text)
-	print(res_as_json)
+
 	funds_origin=res_as_json["_embedded"]["records"][0]["source_account"]
 	server=Server("https://horizon.stellar.org/")
 	NET_PASS=Network.PUBLIC_NETWORK_PASSPHRASE
-	account=server.load_account(keypair.public_key)
+	account=server.load_account(keys.public_key)
 	txn=TransactionBuilder(
 		source_account=account,
 		network_passphrase=NET_PASS,
@@ -255,13 +271,12 @@ def issue_refund():
 		).append_account_merge_op(
 			destination=funds_origin
 			).set_timeout(10000).build()
-
-	txn.sign(keypair)
-	reset()
-	server.submit_transaction(txn)
-	backupfile("keys.txt")
-	KEY_GEN=True
-	return "Account merged with source account."
+	txn.sign(keys)
+	try:
+		server.submit_transaction(txn)
+		return True
+	except:
+		return False
 
 #testnet must be a boolean value. True for testnet, False for mainnet
 def genKeypair( testnet ):
@@ -278,9 +293,9 @@ def genKeypair( testnet ):
 		str+=","
 		str+=keypair.secret
 
-		f=open("keys.txt", "w")
-		f.write(str)
-		f.close()
+		with open("keys.txt", "w") as f:
+			f.write(str)
+
 		KEY_GEN=False
 		return keypair
 	else:
@@ -374,4 +389,7 @@ def backupfile(fname):
 
 if __name__ == '__main__':
 	startupcheck()
-	app.run(port=5000, host='0.0.0.0', debug=True, use_reloader=False)
+	prt=5000
+	if len(sys.argv)>= 2:
+		prt=sys.argv[1]
+	app.run(port=prt, host='0.0.0.0', debug=True, use_reloader=False)

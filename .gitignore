@@ -1,4 +1,13 @@
 txs/
+backups/
 *.out
 *.txt
 *.db
+test/api.py
+test/write.py
+test/read.py
+test/backups
+test/templates
+test/cpTest.py
+test/temp.py
+test/__pycache__/

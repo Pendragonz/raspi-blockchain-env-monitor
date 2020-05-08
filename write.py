@@ -10,35 +10,34 @@ import sqlite3
 
 print("write.py started")
 
-apiAddr = None
+horizon = None
 server = None
 NET_PASS = None
 keypair = None
 
 #sets up global variables
 def getKeysSettings():
-	global apiAddr, server, NET_PASS, keypair
+	global horizon, server, NET_PASS, keypair
 
 	#ensures keys.txt exists before continuing
-	if os.path.isfile('keys.txt') is not True:
+	while os.path.isfile('keys.txt') is not True:
 		writeStatus("Keys have not been created.")
 		time.sleep(30)
 
 	#Load keypair and settings from filesystem
-	f=open('keys.txt', 'r')
-	keyData=f.read()
-	f.close()
+	with open("keys.txt", "r") as f:
+		keyData=f.read()
 
 	#Process data and set up global variables
 	listKeyData=[x.strip() for x in keyData.split(',')]
 
 	if listKeyData[0] == "MAINNET":
-		apiAddr="https://horizon.stellar.org/"
-		server=Server(apiAddr)
+		horizon="https://horizon.stellar.org/"
+		server=Server(horizon)
 		NET_PASS=Network.PUBLIC_NETWORK_PASSPHRASE
 	else:
-		apiAddr="https://horizon-testnet.stellar.org/"
-		server=Server(apiAddr)
+		horizon="https://horizon-testnet.stellar.org/"
+		server=Server(horizon)
 		NET_PASS=Network.TESTNET_NETWORK_PASSPHRASE
 
 	keypair=Keypair.from_secret(listKeyData[2])
@@ -49,7 +48,7 @@ def writeStatus(txt):
 
 #Checks if the Stellar account has been created and funded.
 def accReady():
-	res=requests.get(apiAddr+"accounts/"+keypair.public_key)
+	res=requests.get(horizon+"accounts/"+keypair.public_key)
 	if res.status_code == 200:
 		try:
 			res_as_json=json.loads(res.text)
@@ -70,19 +69,14 @@ def accReady():
 		writeStatus("account not found/balance is 0")
 		return False
 
+#attempt to send a txn. If it fails, return false. If it succeeds, return true
 def sendTXN(txn):
-	#CHECK RESPONSE CODE AND HANDLE ACCORDINGLY.
 	try:
 		response=server.submit_transaction(txn)
 		print(response)
 		return True
 	except:
 		return False
-
-	#print(response)
-	#if response["status"] != 200:
-	#	return False
-	#print(response)
 	return True
 
 def getNextData():
@@ -112,7 +106,7 @@ def getNextData():
 		except:
 			print("IO Error")
 		#if error/nothing to send
-		time.sleep(20)
+		time.sleep(5)
 
 def updateDBRecord(id):
 	try:
@@ -149,7 +143,7 @@ def mainLoop():
 		#sign and submit
 		txn.sign(keypair)
 		while sendTXN(txn) is False:
-			time.sleep(20)
+			time.sleep(4)
 
 		while updateDBRecord(data[1]) is False:
 			time.sleep(5)

@@ -6,7 +6,7 @@ import plotly.express as px
 import pandas as pd
 import sys
 
-#GDJELROP5MRTF5QXPW3AKGJSHQQXKEB5AKHTBBYVGOOSZLHPLH4QRBDU
+#example input addr GDJELROP5MRTF5QXPW3AKGJSHQQXKEB5AKHTBBYVGOOSZLHPLH4QRBDU
 url="https://horizon.stellar.org/accounts/" + sys.argv[1] +"/transactions?limit=200"
 
 print("making tx data request")
@@ -22,7 +22,6 @@ humids=[]
 
 for txnrecord in res_json["_embedded"]["records"]:
     if txnrecord["memo_type"]=="text":
-
         try:
             memos.append(txnrecord["memo"])
         except Exception as e:
@@ -32,11 +31,7 @@ for txnrecord in res_json["_embedded"]["records"]:
 
 def tx_req():
     global res_json, memos, res
-    #try:
     res=requests.get(res_json["_links"]["next"]["href"])
-    #except Exception as e:
-    #    print(e)
-    #    return False
 
     if res.status_code == 400 or res.status_code==404:
         print(res)
@@ -60,10 +55,12 @@ def tx_req():
             memos.append(txn["memo"])
     return True
 
+#get txsn recursively until all have been obtained
 while tx_req() is True:
     print("next called")
 
 
+#process memo fields to obtain temp and humidity data
 datetimes=[]
 for memo in memos:
     d_md=memo[:5]
@@ -81,8 +78,9 @@ for memo in memos:
     dt=datetime.datetime.strptime("2020:"+d_md+":"+d_hms,"%Y:%d-%m:%H:%M:%S")
     datetimes.append(dt)
 
-df=pd.DataFrame({'datetimes':datetimes, 'temps':temps})
 
+#build graphs and display
+df=pd.DataFrame({'datetimes':datetimes, 'temps':temps})
 fig = px.line(df, x="datetimes", y="temps")
 fig.show()
 df = pd.DataFrame({'datetimes':datetimes, 'humids':humids})
