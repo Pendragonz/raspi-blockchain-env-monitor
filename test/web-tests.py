@@ -80,12 +80,12 @@ class TestHome(unittest.TestCase):
 		self.register(uname, pword)
 		time.sleep(1)
 		self.assertTrue(self.check_uname_in_db(uname))
-	
+
 	def register(self, uname, pword):
 		data={'username': str(uname), 'password':str(pword)}
 		reg_url=url+"/register_submit"
 		requests.post(reg_url, data=data)
-		
+
 
 	def check_uname_in_db(self, username):
 		userdb=sqlite3.connect("users.db")
@@ -94,7 +94,7 @@ class TestHome(unittest.TestCase):
 		res=curs.fetchone()
 		userdb.close()
 		return res
-		
+
 
 
 	def test_run_testnet(self):
@@ -106,7 +106,7 @@ class TestHome(unittest.TestCase):
 		res=requests.post(run_url, data=data, auth=(uname, pword))
 		#print(res.text)
 		self.assertEqual(res.status_code, 200)
-		
+
 		time.sleep(10)
 		num_entries = self.get_num_env_entries()
 		#print("DB ENTRIES-------------------------------------------"+str(num_entries))
@@ -118,7 +118,7 @@ class TestHome(unittest.TestCase):
 			num_operations=get_num_operations.main("https://horizon-testnet.stellar.org", pubkey)
 			#print("NUM OPERATIONS---------" + str(num_operations))
 			self.assertTrue(num_operations > 1)
-		
+
 		requests.get(url+"/reset", auth=(uname,pword))
 
 
@@ -158,24 +158,24 @@ class TestHome(unittest.TestCase):
 		serv_keys=self.get_keypair_from_file('keys.txt')
 		self.send_txn(test_keys.secret, serv_keys.public_key, None)
 		time.sleep(30)
-		
+
 		self.assertTrue(self.get_num_env_entries() > 3)
 
 
-		#stop server before testing and refunding acc to give horizon time. 
+		#stop server before testing and refunding acc to give horizon time.
 		#horizon returns false sequence numbers during high load
 		requests.get(url+'/reset', auth=(uname, pword))
 
 		time.sleep(5)
 
 		num_operations=get_num_operations.main("https://horizon.stellar.org", serv_keys.public_key)
-		
+
 		#print("NUM STELLAR TXNS"+str(num_operations))
 		self.assertTrue(num_operations>1)
 
 		#refund src account
 		self.send_txn(serv_keys.secret, test_keys.public_key, True)
-	
+
 
 	def test_reset(self):
 		uname="daniel"
@@ -196,7 +196,7 @@ class TestHome(unittest.TestCase):
 		userdb.close()
 		print("number of users::::::::::::" + str(numUsers[0]))
 		self.assertEqual(numUsers[0], 0)
-		
+
 
 
 	def test_refund(self):
@@ -206,12 +206,14 @@ class TestHome(unittest.TestCase):
 		dta={'NETWORK':'MAINNET','INTERVAL':'3'}
 		requests.post(url+'/run_submit', data=dta, auth=(uname,pword))
 		time.sleep(20)
+
+		test_keypair=self.get_keypair_from_file('testing_keys.txt')
+		serv_keypair=self.get_keypair_from_file('keys.txt')
+
 		dta={'CONFIRM':'YES'}
 		requests.post(url+'/refund_confirm',data=dta, auth=(uname,pword))
 		time.sleep(5)
 		
-		test_keypair=self.get_keypair_from_file('testing_keys.txt')
-		serv_keypair=self.get_keypair_from_file('keys.txt')
 		uri="https://horizon.stellar.org/accounts/"+test_keypair.public_key
 		uri=uri+"/operations?order=desc"
 		res=requests.get(uri)
@@ -250,7 +252,7 @@ class TestHome(unittest.TestCase):
 					starting_balance="1.51").set_timeout(1000).build()
 		txn.sign(keys)
 		server.submit_transaction(txn)
-	
+
 
 	def test_get_pubkey(self):
 		uname="daniel"
@@ -259,14 +261,14 @@ class TestHome(unittest.TestCase):
 		data={'NETWORK': 'TESTNET', 'INTERVAL': '2'}
 		requests.post(url+"/run_submit", data=data, auth=(uname,pword))
 		res=requests.get(url+"/get/pubkey")
-		
+
 		proc_res=res.text.split(": ")
 		self.assertEqual(proc_res[0], "TESTNET")
 
 		pubkey=self.get_pubkey_from_file()
 
 		self.assertEqual(proc_res[1], pubkey)
-		
+
 		requests.get(url+'/reset', auth=(uname, pword))
 
 
