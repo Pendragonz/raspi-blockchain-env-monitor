@@ -25,9 +25,8 @@ def getKeysSettings():
 		time.sleep(30)
 
 	#Load keypair and settings from filesystem
-	f=open('keys.txt', 'r')
-	keyData=f.read()
-	f.close()
+	with open("keys.txt", "r") as f:
+		keyData=f.read()
 
 	#Process data and set up global variables
 	listKeyData=[x.strip() for x in keyData.split(',')]
