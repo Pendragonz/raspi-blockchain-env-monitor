@@ -93,7 +93,7 @@ def mainLoop():
 			num_readings=0
 			end=time.time()+INTERVAL
 
-#need to add extra lines to check if data is actually being written.
+#writes temp, humiditiy and datetime to db
 def writeToDB(temp, humid, datetime):
 	vals=[float(temp), float(humid), str(datetime), 0]
 	print(vals)

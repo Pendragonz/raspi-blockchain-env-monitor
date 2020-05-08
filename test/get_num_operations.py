@@ -2,6 +2,7 @@ import requests
 import json
 import sys
 
+#example address as default
 addr="GDJELROP5MRTF5QXPW3AKGJSHQQXKEB5AKHTBBYVGOOSZLHPLH4QRBDU"
 url="https://horizon.stellar.org/accounts/"
 
@@ -14,8 +15,6 @@ def main(purl, paddr):
 	if paddr is not None:
 		addr=paddr
 
-	#print(addr)
-	#print(url)
 
 	res=requests.get(url+addr+"/operations?limit=200")
 	res_json=json.loads(res.text)
@@ -36,7 +35,6 @@ def main(purl, paddr):
 
 
 def process_res(res_json):
-	#res_json=json.loads(res.text)
 	count=0
 	for record in res_json["_embedded"]["records"]:
 		if record["type"] is "create_account":
@@ -63,6 +61,5 @@ if __name__=="__main__":
 	elif len(sys.argv) == 3:
 		addr=sys.argv[1]
 		url=sys.argv[2] + "/accounts/"
-	
+
 	print(main(None, None))
-	

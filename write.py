@@ -69,8 +69,8 @@ def accReady():
 		writeStatus("account not found/balance is 0")
 		return False
 
+#attempt to send a txn. If it fails, return false. If it succeeds, return true
 def sendTXN(txn):
-	#CHECK RESPONSE CODE AND HANDLE ACCORDINGLY.
 	try:
 		response=server.submit_transaction(txn)
 		print(response)
@@ -143,7 +143,7 @@ def mainLoop():
 		#sign and submit
 		txn.sign(keypair)
 		while sendTXN(txn) is False:
-			time.sleep(5)
+			time.sleep(4)
 
 		while updateDBRecord(data[1]) is False:
 			time.sleep(5)

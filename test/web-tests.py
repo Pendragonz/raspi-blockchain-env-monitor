@@ -20,20 +20,20 @@ class TestHome(unittest.TestCase):
 	url=None
 	HIDE=None
 
+	#starts api.py on port 5050, waits for it to start up properly
 	def setUp(self):
 		self.cleanTheSlate()
 		self.url="http://0.0.0.0:5050"
 		self.HIDE=open(os.devnull, "w")
-		#self.api=subprocess.Popen(["flask", "run", "--host", "0.0.0.0", "--port", "5050", "--no-reload"]) #, stdout=self.HIDE#)
 		self.api=subprocess.Popen(["python3", "api.py", "5050", "&"], shell=False, stdout=self.HIDE)
-		#print("SUBPROCESS STARTED =====================")
 		time.sleep(3)
 
+	#stops api.py --> individual tests need to stop the suprocesses
+	#read.py and write.py
 	def tearDown(self):
 		self.api.terminate()
 		self.api.wait()
 		time.sleep(1)
-		#print("SUBPROCESS TERMINATED ===============")
 		self.cleanTheSlate()
 		self.HIDE.close()
 
@@ -74,11 +74,12 @@ class TestHome(unittest.TestCase):
 		self.assertEqual(requests.get(url+"/").status_code, 200)
 
 	def test_register(self):
+		#register
 		uname="daniel"
 		pword="password"
-
 		self.register(uname, pword)
 		time.sleep(1)
+		#ensure registration details are in DB correctly
 		self.assertTrue(self.check_uname_in_db(uname))
 
 	def register(self, uname, pword):
@@ -170,7 +171,6 @@ class TestHome(unittest.TestCase):
 
 		num_operations=get_num_operations.main("https://horizon.stellar.org", serv_keys.public_key)
 
-		#print("NUM STELLAR TXNS"+str(num_operations))
 		self.assertTrue(num_operations>1)
 
 		#refund src account
@@ -178,31 +178,39 @@ class TestHome(unittest.TestCase):
 
 
 	def test_reset(self):
+		#register
 		uname="daniel"
 		pword="password"
 		self.register(uname, pword)
+		#run app on testnet with 2 second interval
 		dta={'NETWORK':'TESTNET','INTERVAL':'2'}
 		requests.post(url+'/run_submit', data=dta, auth=(uname,pword))
 		time.sleep(20)
+
+		#count number of entries
 		entries=self.get_num_env_entries()
 		self.assertTrue(entries>=3)
+		#call reset
 		requests.get(url+'/reset', auth=(uname,pword))
-
 		time.sleep(2)
+
+		#ensure users have been deleted
 		userdb=sqlite3.connect("users.db")
 		curs=userdb.cursor()
 		curs.execute('SELECT Count(*) FROM users')
 		numUsers=curs.fetchone()
 		userdb.close()
-		print("number of users::::::::::::" + str(numUsers[0]))
+
 		self.assertEqual(numUsers[0], 0)
 
 
 
 	def test_refund(self):
+		#register
 		uname="daniel"
 		pword="password"
 		self.register(uname,pword)
+		#start app on mainnet with interval 3
 		dta={'NETWORK':'MAINNET','INTERVAL':'3'}
 		requests.post(url+'/run_submit', data=dta, auth=(uname,pword))
 		time.sleep(20)
@@ -210,17 +218,18 @@ class TestHome(unittest.TestCase):
 		test_keypair=self.get_keypair_from_file('testing_keys.txt')
 		serv_keypair=self.get_keypair_from_file('keys.txt')
 
+		#call /refund
 		dta={'CONFIRM':'YES'}
 		requests.post(url+'/refund_confirm',data=dta, auth=(uname,pword))
 		time.sleep(5)
-		
+
+		#verify app's a ccount has been properly merged with source
 		uri="https://horizon.stellar.org/accounts/"+test_keypair.public_key
 		uri=uri+"/operations?order=desc"
 		res=requests.get(uri)
 		res_json=json.loads(res.text)
 		record=res_json["_embedded"]["records"][0]
 		self.assertEqual(record["type"],"account_merge")
-		#self.assertEqual(record["source_account"], serv_keypair.public_key)
 		self.assertEqual(record["into"], test_keypair.public_key)
 
 
@@ -232,7 +241,6 @@ class TestHome(unittest.TestCase):
 		NET_PASS=Network.PUBLIC_NETWORK_PASSPHRASE
 		basefee=server.fetch_base_fee()
 		account=server.load_account(keys.public_key)
-		#print("DESTINATION:-----------------------------------:" + dest)
 		if merge !=  None and merge == True:
 			txn=TransactionBuilder(
 				source_account=account,
@@ -242,7 +250,6 @@ class TestHome(unittest.TestCase):
 					destination=dest
 					).set_timeout(10000).build()
 		else:
-			#print("POPULATING ACCOUNT: "+dest+ "from: " + keys.public_key)
 			txn=TransactionBuilder(
 				source_account=account,
 				network_passphrase=NET_PASS,
@@ -255,23 +262,28 @@ class TestHome(unittest.TestCase):
 
 
 	def test_get_pubkey(self):
+		#register
 		uname="daniel"
 		pword="password"
 		self.register(uname, pword)
+		#run on testnet
 		data={'NETWORK': 'TESTNET', 'INTERVAL': '2'}
 		requests.post(url+"/run_submit", data=data, auth=(uname,pword))
+		#call get pubkey
 		res=requests.get(url+"/get/pubkey")
 
+		#verify /get/pubkey returns the same information that's contianed
+		#in keys.txt
 		proc_res=res.text.split(": ")
 		self.assertEqual(proc_res[0], "TESTNET")
-
 		pubkey=self.get_pubkey_from_file()
-
 		self.assertEqual(proc_res[1], pubkey)
-
+		#clean up
 		requests.get(url+'/reset', auth=(uname, pword))
 
 
+#clone the files we'll be testing into the testing folder
+#in order to run them without interfering with the main app.
 copyfile('../api.py', 'api.py')
 copyfile('../read.py', 'read.py')
 copyfile('../write.py','write.py')

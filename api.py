@@ -19,14 +19,13 @@ import time
 app = Flask(__name__)
 auth=HTTPBasicAuth()
 
-#placeholders to hold subprocess instances
+
+#initialise all variables to defaults and placeholder values
+
 readprocess=None
 writeprocess=None
-#if True, no more users can be registered
 userRegistered=False
-#defaults to false, assuming a keys.txt file is already generated. Used to control whether to generate new keys or not.
 KEY_GEN=False
-#variables to track app run status. Only one should be True.
 testnetAppRunning=False
 mainnetAppRunning=False
 
@@ -44,6 +43,7 @@ def resetUserDB():
 	userdb.close()
 	userRegistered=False
 
+#home page
 @app.route('/')
 def index():
 	return render_template("index.html")
@@ -56,6 +56,7 @@ def register():
 	else:
 		return render_template("register.html")
 
+#1 user policy enforced
 @app.route('/register_submit', methods=['POST'])
 def register_submission():
 	global userRegistered
@@ -95,7 +96,6 @@ def verify_password(username, password):
 		if res[1] == username and generate_password_hash( res[2] ):
 			return True
 	return False
-
 
 
 @app.route('/run')
@@ -196,8 +196,8 @@ def reset():
 		testnetAppRunning=False
 
 	userRegistered=False
-	resetUserDB()
 
+	resetUserDB()
 	stop_processes()
 
 	backupfile("envdata.db")
@@ -234,12 +234,10 @@ def issue_refund():
 		return "Testnet funds have not been returned. Keys have been deleted"
 
 	keypair=Keypair.from_secret(keydata[2])
-
 	stop_processes()
 
 	while submit_merge_txn(keypair) is False:
 		time.sleep(1)
-
 	reset()
 
 	backupfile("keys.txt")
@@ -295,9 +293,9 @@ def genKeypair( testnet ):
 		str+=","
 		str+=keypair.secret
 
-		f=open("keys.txt", "w")
-		f.write(str)
-		f.close()
+		with open("keys.txt", "w") as f:
+			f.write(str)
+
 		KEY_GEN=False
 		return keypair
 	else:
