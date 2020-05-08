@@ -20,7 +20,7 @@ def getKeysSettings():
 	global horizon, server, NET_PASS, keypair
 
 	#ensures keys.txt exists before continuing
-	if os.path.isfile('keys.txt') is not True:
+	while os.path.isfile('keys.txt') is not True:
 		writeStatus("Keys have not been created.")
 		time.sleep(30)
 
@@ -77,11 +77,6 @@ def sendTXN(txn):
 		return True
 	except:
 		return False
-
-	#print(response)
-	#if response["status"] != 200:
-	#	return False
-	#print(response)
 	return True
 
 def getNextData():
@@ -111,7 +106,7 @@ def getNextData():
 		except:
 			print("IO Error")
 		#if error/nothing to send
-		time.sleep(20)
+		time.sleep(5)
 
 def updateDBRecord(id):
 	try:
@@ -148,7 +143,7 @@ def mainLoop():
 		#sign and submit
 		txn.sign(keypair)
 		while sendTXN(txn) is False:
-			time.sleep(20)
+			time.sleep(5)
 
 		while updateDBRecord(data[1]) is False:
 			time.sleep(5)

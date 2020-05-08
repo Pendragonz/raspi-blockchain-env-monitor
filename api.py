@@ -19,7 +19,7 @@ import time
 app = Flask(__name__)
 auth=HTTPBasicAuth()
 
-#placeholder to hold read.py subprocess
+#placeholders to hold subprocess instances
 readprocess=None
 writeprocess=None
 #if True, no more users can be registered
@@ -185,7 +185,7 @@ def reset_page():
 
 
 def reset():
-	global mainnetAppRunning, testnetAppRunning, userRegistered, readprocess, writeprocess
+	global mainnetAppRunning, testnetAppRunning, userRegistered
 
 	if mainnetAppRunning is True:
 		os.remove('mainrunning.txt')
@@ -198,13 +198,7 @@ def reset():
 	userRegistered=False
 	resetUserDB()
 
-	if readprocess is not None:
-		readprocess.terminate()
-		readprocess.wait()
-
-	if writeprocess is not None:
-		writeprocess.terminate()
-		writeprocess.wait()
+	stop_processes()
 
 	backupfile("envdata.db")
 

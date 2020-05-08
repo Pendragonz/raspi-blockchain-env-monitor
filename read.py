@@ -78,14 +78,12 @@ def mainLoop():
 			avg_humid="%.2f"%float(avg_humid)
 
 			#format date time to;  Month/Day;hour:minute:second e.g. 10/12;14:45:12
-			#t_=time.localtime()[1:6]
-			#dt=str(t_[1]) + "/"+ str(t_[0]) + ";" + str(t_[2])+":"+str(t_[3])+":"+str(t_[4])
 			dt="{0:%d-%m;%H:%M:%S}".format(datetime.datetime.now())
 
 
 			#Keep trying to add it to the db
 			while writeToDB(avg_temp, avg_humid, dt) is not True:
-				time.sleep(5)
+				time.sleep(1)
 
 			print('vals written to db' + " interval: " + str(INTERVAL))
 
@@ -109,7 +107,5 @@ def writeToDB(temp, humid, datetime):
 	except:
 		print("can't write to db")
 		return False
-#start subprocess write.py here
-#print("opening write.py")
-#process=subprocess.Popen(["python3", "write.py"], shell=False)
+
 mainLoop()
