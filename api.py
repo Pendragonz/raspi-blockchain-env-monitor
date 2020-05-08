@@ -62,8 +62,6 @@ def register_submission():
 	if userRegistered == True:
 		return "err user already registered. Please /reset to register the new admin."
 
-	print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-	print(request.form)
 	add_user_to_db(request.form["username"], request.form["password"])
 	return "Admin: " + request.form["username"] + " registered successfully."
 
@@ -242,15 +240,38 @@ def issue_refund():
 		return "Testnet funds have not been returned. Keys have been deleted"
 
 	keypair=Keypair.from_secret(keydata[2])
-	#get send address from first transaction
-	url="https://horizon.stellar.org/accounts/"+keypair.public_key + "/transactions?limit=1"
+
+	stop_processes()
+
+	while submit_merge_txn(keypair) is False:
+		time.sleep(1)
+
+	reset()
+
+	backupfile("keys.txt")
+	KEY_GEN=True
+	return "Account merged with source account."
+
+def stop_processes():
+	global readprocess, writeprocess
+	if readprocess is not None:
+		readprocess.terminate()
+		readprocess.wait()
+		readprocess=None
+	if writeprocess is not None:
+		writeprocess.terminate()
+		writeprocess.wait()
+		writeprocess=None
+
+def submit_merge_txn(keys):
+	url="https://horizon.stellar.org/accounts/"+keys.public_key + "/transactions?limit=1"
 	res=requests.get(url)
 	res_as_json=json.loads(res.text)
-	print(res_as_json)
+	#print(res_as_json)
 	funds_origin=res_as_json["_embedded"]["records"][0]["source_account"]
 	server=Server("https://horizon.stellar.org/")
 	NET_PASS=Network.PUBLIC_NETWORK_PASSPHRASE
-	account=server.load_account(keypair.public_key)
+	account=server.load_account(keys.public_key)
 	txn=TransactionBuilder(
 		source_account=account,
 		network_passphrase=NET_PASS,
@@ -258,13 +279,12 @@ def issue_refund():
 		).append_account_merge_op(
 			destination=funds_origin
 			).set_timeout(10000).build()
-
 	txn.sign(keypair)
-	reset()
-	server.submit_transaction(txn)
-	backupfile("keys.txt")
-	KEY_GEN=True
-	return "Account merged with source account."
+	try:
+		server.submit_transaction(txn)
+		return True
+	except:
+		return False
 
 #testnet must be a boolean value. True for testnet, False for mainnet
 def genKeypair( testnet ):
