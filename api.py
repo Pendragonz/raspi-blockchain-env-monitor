@@ -259,7 +259,7 @@ def submit_merge_txn(keys):
 	url="https://horizon.stellar.org/accounts/"+keys.public_key + "/transactions?limit=1"
 	res=requests.get(url)
 	res_as_json=json.loads(res.text)
-	#print(res_as_json)
+
 	funds_origin=res_as_json["_embedded"]["records"][0]["source_account"]
 	server=Server("https://horizon.stellar.org/")
 	NET_PASS=Network.PUBLIC_NETWORK_PASSPHRASE
@@ -271,7 +271,7 @@ def submit_merge_txn(keys):
 		).append_account_merge_op(
 			destination=funds_origin
 			).set_timeout(10000).build()
-	txn.sign(keypair)
+	txn.sign(keys)
 	try:
 		server.submit_transaction(txn)
 		return True
