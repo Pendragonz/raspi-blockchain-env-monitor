@@ -158,7 +158,7 @@ class TestHome(unittest.TestCase):
 		test_keys=self.get_keypair_from_file('testing_keys.txt')
 		serv_keys=self.get_keypair_from_file('keys.txt')
 		self.send_txn(test_keys.secret, serv_keys.public_key, None)
-		time.sleep(30)
+		time.sleep(20)
 
 		self.assertTrue(self.get_num_env_entries() > 3)
 
