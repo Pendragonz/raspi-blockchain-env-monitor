@@ -4,6 +4,7 @@ import subprocess
 import time
 import os
 import sqlite3
+import json
 
 import get_num_operations
 
@@ -198,8 +199,28 @@ class TestHome(unittest.TestCase):
 		
 
 
-#	def test_refund(self):
-#		pass
+	def test_refund(self):
+		uname="daniel"
+		pword="password"
+		self.register(uname,pword)
+		dta={'NETWORK':'MAINNET','INTERVAL':'3'}
+		requests.post(url+'/run_submit', data=dta, auth=(uname,pword))
+		time.sleep(20)
+		dta={'CONFIRM':'YES'}
+		requests.post(url+'/refund_confirm',data=dta, auth=(uname,pword))
+		time.sleep(5)
+		
+		test_keypair=self.get_keypair_from_file('testing_keys.txt')
+		serv_keypair=self.get_keypair_from_file('keys.txt')
+		uri="https://horizon.stellar.org/accounts/"+test_keypair.public_key
+		uri=uri+"/operations?order=desc"
+		res=requests.get(uri)
+		res_json=json.loads(res.text)
+		record=res_json["_embedded"]["records"][0]
+		self.assertEqual(record["type"],"account_merge")
+		#self.assertEqual(record["source_account"], serv_keypair.public_key)
+		self.assertEqual(record["into"], test_keypair.public_key)
+
 
 	#origin= source private key, dest = destination stellar pubkey
 	#merge boolean. if True, source acc merges with destination
