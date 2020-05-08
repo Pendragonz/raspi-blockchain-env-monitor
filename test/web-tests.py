@@ -166,11 +166,11 @@ class TestHome(unittest.TestCase):
 		#stop server before testing and refunding acc to give horizon time.
 		#horizon returns false sequence numbers during high load
 		requests.get(url+'/reset', auth=(uname, pword))
-
 		time.sleep(5)
 
-		num_operations=get_num_operations.main("https://horizon.stellar.org", serv_keys.public_key)
-
+		#check txns are being pushed to Stellar
+		num_operations=get_num_operations.main("https://horizon.stellar.org",
+			serv_keys.public_key)
 		self.assertTrue(num_operations>1)
 
 		#refund src account
