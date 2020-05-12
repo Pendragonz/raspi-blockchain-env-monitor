@@ -260,7 +260,7 @@ class TestHome(unittest.TestCase):
 						base_fee=basefee,
 						).append_create_account_op(
 							destination=dest,
-							starting_balance="1.51").set_timeout(1000).build()
+							starting_balance="1.11").set_timeout(1000).build()
 				txn.sign(keys)
 				server.submit_transaction(txn)
 				txnSent=True
