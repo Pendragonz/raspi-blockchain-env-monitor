@@ -106,7 +106,7 @@ def getNextData():
 		except:
 			print("IO Error")
 		#if error/nothing to send
-		time.sleep(5)
+		#time.sleep(5)
 
 def updateDBRecord(id):
 	try:
