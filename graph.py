@@ -6,6 +6,9 @@ import plotly.express as px
 import pandas as pd
 import sys
 
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
 #example input addr GDJELROP5MRTF5QXPW3AKGJSHQQXKEB5AKHTBBYVGOOSZLHPLH4QRBDU
 url="https://horizon.stellar.org/accounts/" + sys.argv[1] +"/transactions?limit=200"
 
@@ -57,7 +60,8 @@ def tx_req():
 
 #get txsn recursively until all have been obtained
 while tx_req() is True:
-    print("next called")
+    #print("next called")
+    pass
 
 
 #process memo fields to obtain temp and humidity data
@@ -80,9 +84,26 @@ for memo in memos:
 
 
 #build graphs and display
-df=pd.DataFrame({'datetimes':datetimes, 'temps':temps})
-fig = px.line(df, x="datetimes", y="temps")
-fig.show()
-df = pd.DataFrame({'datetimes':datetimes, 'humids':humids})
-fig = px.line(df, x="datetimes", y="humids")
+fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+fig.add_trace(go.Scatter(
+    x=datetimes,
+    y=temps,
+    name="temperature"),
+    secondary_y=False
+)
+
+fig.add_trace(go.Scatter(
+    x=datetimes,
+    y=humids,
+    name="humidity"),
+    secondary_y=True
+)
+
+titleString="Account: " + sys.argv[1]
+
+fig.update_layout(
+    title=titleString
+)
+
 fig.show()
