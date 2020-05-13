@@ -138,7 +138,7 @@ def mainLoop():
 			).add_text_memo(memo_to_write).append_payment_op(
 				destination=keypair.public_key,
 				asset_code="XLM",
-				amount="0.1").set_timeout(100000).build()
+				amount="0.00001").set_timeout(100000).build()
 
 		#sign and submit
 		txn.sign(keypair)
