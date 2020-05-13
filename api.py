@@ -201,6 +201,7 @@ def reset():
 	stop_processes()
 
 	backupfile("envdata.db")
+	backupfile("keys.txt")
 
 	return "users deleted, processes stopped."
 
