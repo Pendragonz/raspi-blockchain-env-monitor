@@ -9,7 +9,9 @@ import sys
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-#example input addr GDJELROP5MRTF5QXPW3AKGJSHQQXKEB5AKHTBBYVGOOSZLHPLH4QRBDU
+#example input addresses:
+#GDJELROP5MRTF5QXPW3AKGJSHQQXKEB5AKHTBBYVGOOSZLHPLH4QRBDU
+#GDCCCKROG23MTXXDMMBZ7E2UIIGZJ3UYHU6CICWFPPJQ7CJ2NPO7XL4J
 url="https://horizon.stellar.org/accounts/" + sys.argv[1] +"/transactions?limit=200"
 
 print("making tx data request")
