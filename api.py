@@ -185,7 +185,7 @@ def reset_page():
 
 
 def reset():
-	global mainnetAppRunning, testnetAppRunning, userRegistered
+	global mainnetAppRunning, testnetAppRunning, userRegistered, KEY_GEN
 
 	if mainnetAppRunning is True:
 		os.remove('mainrunning.txt')
@@ -202,6 +202,7 @@ def reset():
 
 	backupfile("envdata.db")
 	backupfile("keys.txt")
+	KEY_GEN=True
 
 	return "users deleted, processes stopped."
 

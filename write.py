@@ -98,6 +98,7 @@ def getNextData():
 					return retstr
 				else:
 					print("up to date")
+					time.sleep(2)
 			except Exception as e:
 				print(e)
 			finally:
