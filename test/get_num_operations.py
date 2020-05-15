@@ -6,7 +6,7 @@ import sys
 addr="GDJELROP5MRTF5QXPW3AKGJSHQQXKEB5AKHTBBYVGOOSZLHPLH4QRBDU"
 url="https://horizon.stellar.org/accounts/"
 
-
+#takes a horizon url and address of account to query
 def main(purl, paddr):
 	global addr, url
 
@@ -33,7 +33,8 @@ def main(purl, paddr):
 
 	return count
 
-
+#count transactions that are not account creation or merge transactions.
+#will likely fail if any non-write.py transactions are made to the account.
 def process_res(res_json):
 	count=0
 	for record in res_json["_embedded"]["records"]:
@@ -43,7 +44,9 @@ def process_res(res_json):
 			count=count+1
 	return count
 
-
+#check validity of response.
+#once all txns are returned, Horizon sets the "next" link as the same value as
+#the last reponses value
 def check_valid(last_res, current_res):
 	if last_res is None:
 		return True
@@ -52,8 +55,6 @@ def check_valid(last_res, current_res):
 			return False
 		else:
 			return True
-
-
 
 if __name__=="__main__":
 	if len(sys.argv) == 2:

@@ -12,7 +12,7 @@ from shutil import copyfile, copytree
 
 from stellar_sdk import Server, Keypair, TransactionBuilder, Network, Account
 
-
+#different port than api.py
 url="http://0.0.0.0:5050"
 
 class TestHome(unittest.TestCase):
@@ -105,19 +105,19 @@ class TestHome(unittest.TestCase):
 		run_url=url+"/run_submit"
 		data={'NETWORK': 'TESTNET', 'INTERVAL': '2'}
 		res=requests.post(run_url, data=data, auth=(uname, pword))
-		#print(res.text)
+
 		self.assertEqual(res.status_code, 200)
 
 		time.sleep(10)
 		num_entries = self.get_num_env_entries()
-		#print("DB ENTRIES-------------------------------------------"+str(num_entries))
+
 		self.assertTrue(int(num_entries) > 3)
 
 		pubkey=self.get_pubkey_from_file()
-		#print("PUBKEY----------------------------------------------------"+pubkey)
+
 		if pubkey is not None:
 			num_operations=get_num_operations.main("https://horizon-testnet.stellar.org", pubkey)
-			#print("NUM OPERATIONS---------" + str(num_operations))
+
 			self.assertTrue(num_operations > 1)
 
 		requests.get(url+"/reset", auth=(uname,pword))
