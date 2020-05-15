@@ -40,7 +40,7 @@ This endpoint will display a form allowing you to register an account on the Pi.
 Additionally, note that only one user can be registered at a time.
 
 ### 192.168.1.X:5000/run
-Providing the /run service hasn't already been activated, this endpoint will provide a form allowing you to start the monitor. Here you can choose the interval in which it will publish averaged readings. You can either run the monitor on Stellar's testnet or mainnet. 
+Providing the /run service hasn't already been activated, this endpoint will provide a form allowing you to start the monitor. Here you can choose the interval in which it will publish averaged readings. You can either run the monitor on Stellar's testnet or mainnet.
 
 If you start it on the testnet, it will automatically request testnet funds in order to run, and begin monitoring.
 
@@ -52,8 +52,8 @@ In order to aquire XLM, purchase some from a cryptocurrency exchange. Ensure you
 ### 192.168.1.X:5000/get/pubkey
 Returns NETWORK:PUBKEY
 
-The network will either be MAINNET or TESTNET, and the PUBKEY will be the Stellar address the monitor is using. 
-To view the account, use an explorer like 
+The network will either be MAINNET or TESTNET, and the PUBKEY will be the Stellar address the monitor is using.
+To view the account, use an explorer like
 https://stellar.expert/explorer/public - for mainnet
 https://stellar.exoert/explorer/testnet - for testnet
 
@@ -61,7 +61,7 @@ https://stellar.exoert/explorer/testnet - for testnet
 Returns any error messages the application outputs.
 
 ### 192.168.1.X:5000/reset
-Stops any currently running services and deletes the registered user.
+Stops any currently running services, deletes the registered user and backsup the local database and keyfile.
 
 ### 192.168.1.X:5000/refund
 If the application is running on Stellar's mainnet, it will refund any unused XLM back to the sender.
@@ -92,6 +92,9 @@ pip install pandas
 ### graph.py
 Simply run graph.py and pass it your Stellar address (testnet not yet supported).
 
-E.G. python3 graphy.py GAZCFTIKK2MRFEF4APXO6OTQK4T5PIWQSHO3THENUIERHN7UB2XCOFA2
+E.G:
+  python graph.py GAZCFTIKK2MRFEF4APXO6OTQK4T5PIWQSHO3THENUIERHN7UB2XCOFA2
+  python graph.py GDCCCKROG23MTXXDMMBZ7E2UIIGZJ3UYHU6CICWFPPJQ7CJ2NPO7XL4J
 
-This will open up 2 charts in your default web browser. One showing temperature against date&time, one showing humidity against date&time.
+
+This will open up a chart in your default web browser. Two traces will be displayed, temperature and humidity.
