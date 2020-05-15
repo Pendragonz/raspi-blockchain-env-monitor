@@ -33,7 +33,8 @@ for txnrecord in res_json["_embedded"]["records"]:
             print(e)
             print(txnrecord)
 
-
+#Make a call to Horizon to obtainnext batch of transactions.
+#Store all memo objects in memos
 def tx_req():
     global res_json, memos, res
     res=requests.get(res_json["_links"]["next"]["href"])
@@ -62,7 +63,6 @@ def tx_req():
 
 #get txsn recursively until all have been obtained
 while tx_req() is True:
-    #print("next called")
     pass
 
 

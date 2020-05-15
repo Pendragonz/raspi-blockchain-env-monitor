@@ -42,6 +42,7 @@ def getKeysSettings():
 
 	keypair=Keypair.from_secret(listKeyData[2])
 
+#write a message to status.txt. Viewable from api.py /get/status endpoint
 def writeStatus(txt):
 	with open('status.txt', 'w') as f:
 		f.write(txt)
@@ -106,8 +107,7 @@ def getNextData():
 
 		except:
 			print("IO Error")
-		#if error/nothing to send
-		#time.sleep(5)
+
 
 def updateDBRecord(id):
 	try:

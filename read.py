@@ -58,6 +58,7 @@ def mainLoop():
 	running_total_humid=0
 
 	while True:
+		#get temperature and add to totals
 		humidity, temperature = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
 		running_total_temp+=temperature
 		running_total_humid+=humidity

@@ -21,7 +21,6 @@ auth=HTTPBasicAuth()
 
 
 #initialise all variables to defaults and placeholder values
-
 readprocess=None
 writeprocess=None
 userRegistered=False
@@ -119,7 +118,7 @@ def run_submission():
 	elif request.form["NETWORK"] == "TESTNET":
 		return testnetService(int(request.form["INTERVAL"]))
 
-
+#Request account generation from friendbot, start the monitoring process.
 def testnetService(interval):
 	global testnetAppRunning, mainnetAppRunning, process
 	if testnetAppRunning==True:
@@ -140,7 +139,7 @@ def testnetService(interval):
 		testnetAppRunning=True
 		return 'App running on testnet on ' + "<a href=\""+getExplorerURL(True,keys.public_key)+"\">" + keys.public_key+"</a>"
 
-
+#Generate keypair and request XLM from user. Start the monitoring process.
 def mainnetService(interval):
 	global testnetAppRunning, mainnetAppRunning,process
 	if testnetAppRunning==True:
@@ -177,13 +176,13 @@ def getPubKey():
 		return "Keypair has not yet been created."
 
 
-#delete all db records and halt all processes
+#backup all db records + keyfile and halt all processes
 @app.route('/reset')
 @auth.login_required
 def reset_page():
 	return reset()
 
-
+#stop all processes, move env database and keyfile to backups
 def reset():
 	global mainnetAppRunning, testnetAppRunning, userRegistered, KEY_GEN
 
@@ -222,7 +221,7 @@ def refund_confirm():
 	elif request.form["CONFIRM"]=="NO":
 		return "XLM withdrawal process cancelled."
 
-#returns funds to issuer, backs-up keys.txt,
+#returns funds to issuer, backs-up keys.txt,calls reset().
 def issue_refund():
 	global KEY_GEN
 
@@ -342,7 +341,7 @@ def carry_on_where_left_off():
 		KEY_GEN=True
 
 	if os.path.isfile('mainrunning.txt') is True:
-		#read the file and send data to
+		#read the file and start read.py with stored interval
 		interval=None
 		with open('mainrunning.txt') as f:
 			interval=f.read()
@@ -350,6 +349,7 @@ def carry_on_where_left_off():
 		runApp(interval)
 		mainnetAppRunning=True
 	elif os.path.isfile('testnetrunning.txt') is True:
+		
 		interval=None
 		with open('testnetrunning.txt') as f:
 			interval=f.read()
