@@ -92,7 +92,7 @@ def verify_password(username, password):
 	userdb.close()
 
 	if res is not None:
-		if res[1] == username and generate_password_hash( res[2] ):
+		if res[1] == username and generate_password_hash( password ) == res[2]:
 			return True
 	return False
 
@@ -349,7 +349,7 @@ def carry_on_where_left_off():
 		runApp(interval)
 		mainnetAppRunning=True
 	elif os.path.isfile('testnetrunning.txt') is True:
-		
+
 		interval=None
 		with open('testnetrunning.txt') as f:
 			interval=f.read()
